@@ -115,9 +115,9 @@ class ProbEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, va
     currLevelProgs += res.get
     val exampleFit = task.fit(res.get)
     val fit: Double = (exampleFit._1.toFloat) / exampleFit._2
-    if (fit > 0.2) {
+    if (fit > 0 && fit != 1.0) {
       Console.withOut(fos) {
-        println(res.get.code)
+        println(res.get.code, fit)
       }
     }
     //Console.withOut(fos) { dprintln(currLevelProgs.takeRight(1).map(c => (c.code, c.cost)).mkString(",")) }

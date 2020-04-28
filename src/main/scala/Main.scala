@@ -44,6 +44,7 @@ object Main extends App {
 
   def synthesize(filename: String) = {
     val task = new SygusFileTask(scala.io.Source.fromFile(filename).mkString)
+    Console.withOut(new enumeration.ProbEnumerator(task.vocab, new InputsValuesManager(), task).fos) { println(filename) }
     assert(task.isPBE)
     synthesizeFromTask(task)
   }
