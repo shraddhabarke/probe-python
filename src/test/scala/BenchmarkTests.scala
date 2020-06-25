@@ -9,7 +9,7 @@ object BenchmarksTests extends App {
     var program: List[ASTNode] = null
     val t0 = System.currentTimeMillis()
     ProbUpdate.resetPrior()
-    program = Main.synthesizeFullSols(file.getAbsolutePath)
+    program = Main.synthesize(file.getAbsolutePath)
     val t1 = System.currentTimeMillis()
     if (program != null) {
       println(file.getName + resultPrinter(program.head, t1 - t0))
@@ -25,6 +25,6 @@ object BenchmarksTests extends App {
     "," + program.code + "," + (msec.toFloat / 1000)
   }
 
-  val tooHardBenchmarks = runBenchmarks("src/test/benchmarks/euphony", regularBenchmarkPrinter)
+  val tooHardBenchmarks = runBenchmarks("src/test/benchmarks/euphony-test", regularBenchmarkPrinter)
 
 }

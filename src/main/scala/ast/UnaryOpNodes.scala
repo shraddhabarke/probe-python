@@ -14,7 +14,6 @@ class IntToString(val arg: IntNode) extends UnaryOpNode[String] with StringNode 
   override def doOp(x: Any): String = if (x.asInstanceOf[Int] >= 0) x.asInstanceOf[Int].toString else ""
 
   override lazy val code: String = "(int.to.str " + arg.code + ")"
-
 }
 
 class StringToInt(val arg: StringNode) extends UnaryOpNode[Int] with IntNode {

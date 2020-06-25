@@ -12,7 +12,7 @@ object Main extends App {
   val filename =
   //"src/test/benchmarks/euphony/extract-word-that-begins-with-specific-character.sl"
   //"src/test/benchmarks/too-hard/43606446.sl"
-  "src/test/benchmarks/euphony/11604909.sl"
+  "src/test/benchmarks/euphony-test/11604909.sl"
 
   case class ExpectedEOFException() extends Exception
 
