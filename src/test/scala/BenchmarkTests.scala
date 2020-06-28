@@ -11,7 +11,7 @@ object BenchmarksTests extends App {
     ProbUpdate.resetPrior()
     program = Main.synthesize(file.getAbsolutePath)
     val t1 = System.currentTimeMillis()
-    if (program != null) {
+    if (!program.isEmpty) {
       println(file.getName + resultPrinter(program.head, t1 - t0))
       file.getName + resultPrinter(program.head, t1 - t0)
     }

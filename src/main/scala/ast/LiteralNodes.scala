@@ -1,5 +1,4 @@
 package ast
-import scala.collection.BitSet
 
 abstract class LiteralNode[T](numContexts: Int) extends ASTNode{
   assert(numContexts > 0)
@@ -9,19 +8,55 @@ abstract class LiteralNode[T](numContexts: Int) extends ASTNode{
   val values: List[T] = List.fill(numContexts)(value)
   override val children: Iterable[ASTNode] = Iterable.empty
   def includes(varName: String): Boolean = false
+  override lazy val usesVariables: Boolean = false
+
 }
 class StringLiteral(val value: String, numContexts: Int) extends LiteralNode[String](numContexts) with StringNode{
   override lazy val code: String = '"' + value + '"' //escape?
-  }
+  override protected val parenless: Boolean = true
+}
 
 class IntLiteral(val value: Int, numContexts: Int) extends LiteralNode[Int](numContexts) with IntNode{
   override lazy val code: String = value.toString
-  }
+  override protected val parenless: Boolean = true
+}
 
 class BoolLiteral(val value: Boolean, numContexts: Int) extends LiteralNode[Boolean](numContexts) with BoolNode {
   override lazy val code: String = value.toString
-  }
+  override protected val parenless: Boolean = true
+}
 
 class BVLiteral(val value: Long, numContexts: Int) extends LiteralNode[Long](numContexts) with BVNode {
   override lazy val code: String = f"#x$value%016x"
+  override protected val parenless: Boolean = true
+}
+
+class PyStringLiteral(val value: String, numContexts: Int) extends LiteralNode[String](numContexts) with PyStringNode
+{
+  override protected val parenless: Boolean = true
+  override val code: String = '"' + value.flatMap(c => if (c.toInt >= 32 && c.toInt <= 127 && c != '\\' && c != '"') c.toString
+  else c.toInt match {
+    case 92 => "\\\\" // \
+    case 34 => "\\\"" // "
+    case 7 => "\\a" //bell
+    case 8 => "\\b" //backspace
+    case 9 => "\\t" //tab
+    case 10 => "\\n" //lf
+    case 11 => "\\v" //vertical tab
+    case 12 => "\\f" //formfeed
+    case 13 => "\\r" //cr
+    case _ => "\\x" + c.toInt.toHexString
+  }) + '"'
+}
+
+class PyIntLiteral(val value: Int, numContexts: Int) extends LiteralNode[Int](numContexts) with PyIntNode
+{
+  override protected val parenless: Boolean = true
+  override val code: String = value.toString
+}
+
+class PyBoolLiteral(val value: Boolean, numContexts: Int) extends LiteralNode[Boolean](numContexts) with PyBoolNode
+{
+  override protected val parenless: Boolean = true
+  override val code: String = value.toString.capitalize
 }

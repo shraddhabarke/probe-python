@@ -17,4 +17,6 @@ object DebugPrints {
   }
   def dprintln(str: => Any) = if (debug) println(str)
   def iprintln(str: => Any) = if (info) println(str)
+  def eprintln(str: => Any) = System.err.println(str)
+
 }

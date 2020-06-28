@@ -12,11 +12,13 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
 
   var nextProgram: Option[ASTNode] = None
 
-  override def hasNext: Boolean = if (!nextProgram.isEmpty) true
-  else {
-    nextProgram = getNextProgram()
-    !nextProgram.isEmpty
-  }
+  override def hasNext: Boolean =
+    if (nextProgram.isDefined) {
+      true
+    } else {
+      nextProgram = getNextProgram
+      nextProgram.isDefined
+    }
 
   override def next(): ASTNode = {
     if (nextProgram.isEmpty) {
