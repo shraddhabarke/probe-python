@@ -68,7 +68,7 @@ class Enumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val co
           return None
       }
     }
-    //println(currLevelProgs.takeRight(1).map(c => (c.code)))
+    println(currLevelProgs.takeRight(1).map(c => (c.code)))
     currLevelProgs += res.get
     res
   }
