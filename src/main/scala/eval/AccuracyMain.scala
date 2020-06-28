@@ -1,4 +1,5 @@
-package sygus
+package eval
+import sygus.{ASTGenerator, SyGuSLexer, SyGuSParser, SygusFileTask, ThrowingLexerErrorListener}
 import ast.ASTNode
 import org.antlr.v4.runtime.{BailErrorStrategy, BufferedTokenStream, CharStreams, Parser, RecognitionException, Token}
 

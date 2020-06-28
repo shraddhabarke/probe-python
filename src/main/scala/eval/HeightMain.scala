@@ -1,11 +1,8 @@
-package sygus
+package eval
 
 import ast.ASTNode
 import enumeration.ProbUpdate
-import enumeration.{InputsValuesManager}
-import util.control.Breaks._
-import scala.concurrent.duration._
-import trace.DebugPrints.{dprintln, iprintln}
+import sygus.Main
 
 object HeightMain extends App {
   def runBenchmarks(filename: String,
