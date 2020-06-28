@@ -9,10 +9,10 @@ class Enumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val co
   override def toString(): String = "enumeration.Enumerator"
 
   var nextProgram: Option[ASTNode] = None
-  override def hasNext: Boolean = if (!nextProgram.isEmpty) true
+  override def hasNext: Boolean = if (nextProgram.isDefined) true
   else {
     nextProgram = getNextProgram()
-    !nextProgram.isEmpty
+    nextProgram.isDefined
   }
 
   override def next(): ASTNode = {
@@ -24,11 +24,13 @@ class Enumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val co
     res
   }
 
-  var currIter = vocab.leaves
+  var currIter: Iterator[VocabMaker] = vocab.leaves
   var childrenIterator: Iterator[List[ASTNode]] = Iterator.single(Nil)
   var rootMaker: VocabMaker = currIter.next()
   var prevLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
   var currLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
+  var height = 0
+
   def advanceRoot(): Boolean = {
     if (!currIter.hasNext) return false
     rootMaker = currIter.next()
@@ -37,19 +39,21 @@ class Enumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val co
     else new ChildrenIterator(prevLevelProgs.toList,rootMaker.childTypes,height)
     true
   }
-  var height = 0
+
   def changeLevel(): Boolean = {
     dprintln(currLevelProgs.length)
     if (currLevelProgs.isEmpty) return false
 
-    currIter = vocab.nonLeaves
+    currIter = vocab.nonLeaves()
     height += 1
     prevLevelProgs ++= currLevelProgs
     currLevelProgs.clear()
     advanceRoot()
   }
+
   def getNextProgram(): Option[ASTNode] = {
     var res : Option[ASTNode] = None
+
     while(res.isEmpty) {
       if (childrenIterator.hasNext) {
         val children = childrenIterator.next()

@@ -32,7 +32,7 @@ class ProbChildrenIterator(val childTypes: List[Types], val childrenCost: Int, v
           return Some(children)
         }
         else { //roll
-          val next = candidates.zipWithIndex.findLast { case (iter, idx) => iter.hasNext }
+          val next = candidates.zipWithIndex.findLast { case (iter, _) => iter.hasNext }
           if (next.isEmpty) return None
           else {
             val (iter, idx) = next.get
@@ -63,7 +63,7 @@ class ProbChildrenIterator(val childTypes: List[Types], val childrenCost: Int, v
 
   override def hasNext: Boolean = {
     if (next_child.isEmpty) getChild()
-    !next_child.isEmpty
+    next_child.isDefined
   }
 
   override def next(): List[ASTNode] = {

@@ -76,12 +76,15 @@ object Main extends App {
     p
   }
 
-  def synthesize(filename: String, sizeBased: Boolean = true, probBased: Boolean = true) = {
+  def synthesize(filename: String, sizeBased: Boolean = false, probBased: Boolean = false) = {
     val task = new SygusFileTask(scala.io.Source.fromFile(filename).mkString)
     assert(task.isPBE)
     synthesizeTask(filename, task, sizeBased, probBased)
   }
 
   trace.DebugPrints.setInfo()
-  synthesize(filename)
+  //SyGus or Python Benchmark
+  if (filename.endsWith(".sl"))
+    synthesize(filename)
+
 }

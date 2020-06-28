@@ -7,14 +7,14 @@ trait OEValuesManager {
   def clear(): Unit
 }
 class InputsValuesManager extends OEValuesManager {
-  val classValues = mutable.HashSet[List[Any]]()
+  val classValues: mutable.Set[List[Any]] = mutable.HashSet[List[Any]]()
   override def isRepresentative(program: ASTNode): Boolean = {
     try {
       val results: List[Any] = program.values
       classValues.add(results)
     }
     catch {
-      case ex: Exception => false
+      case _: Exception => false
     }
   }
 
