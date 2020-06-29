@@ -1,0 +1,29 @@
+{
+  "varName": "rs",
+  "env": [
+    {
+      "#": "",
+      "$": "",
+      "name": "'Nadia Polikarpova'",
+      "rs": "'H.P'"
+    },
+    {
+      "#": "",
+      "$": "",
+      "name": "'Hila Peleg'",
+      "rs": "'H.P'"
+    },
+    {
+      "#": "",
+      "$": "",
+      "name": "'Sorin Lerner'",
+      "rs": "'S.L'"
+    },
+    {
+      "#": "",
+      "$": "",
+      "name": "'Kasra Ferdowsi Fard'",
+      "rs": "'K.F.F'"
+    }
+  ]
+}

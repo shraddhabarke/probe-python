@@ -1,0 +1,19 @@
+{
+  "varName": "rs",
+  "env": [
+    {
+      "#": "",
+      "$": "",
+      "s": "'abracadabra'",
+      "vowels": "'aeiouAEIOU'",
+      "rs": "5"
+    },
+    {
+      "#": "",
+      "$": "",
+      "s": "'Nadia Polikarpova'",
+      "vowels": "'aeiouAEIOU'",
+      "rs": "8"
+    }
+  ]
+}

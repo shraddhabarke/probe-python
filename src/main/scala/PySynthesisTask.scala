@@ -33,7 +33,7 @@ class PythonExample(var env: Map[String, String])
 object PythonExample
 {
   val reserved_names: Set[String] =
-    Set("time", "#", "$", "lineno", "prev_lineno", "next_lineno", "__run_py__")
+    Set("#", "$", "__run_py__")
 }
 
 class PythonPBETask(

@@ -55,7 +55,7 @@ class PyEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager, va
    * @return False if the current level failed to generate any new programs.
    */
   def changeLevel(): Boolean = {
-    dprintln(currLevelProgs.length)
+    //dprintln(currLevelProgs.length)
     if (currLevelProgs.isEmpty) return false
 
     currIter = vocab.nonLeaves()
@@ -87,7 +87,7 @@ class PyEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager, va
       }
     }
     currLevelProgs += res.get
-    println(currLevelProgs.takeRight(1).map(c => (c.code)))
+    //println(currLevelProgs.takeRight(1).map(c => (c.code)))
     res
   }
 }

@@ -1,0 +1,23 @@
+{
+  "varName": "rs",
+  "env": [
+    {
+      "#": "",
+      "$": "",
+      "name": "'Sorin Lerner'",
+      "rs": "12"
+    },
+    {
+      "#": "",
+      "$": "",
+      "name": "'Nadia Polikarpova'",
+      "rs": "17"
+    },
+    {
+      "#": "",
+      "$": "",
+      "name": "'Hila Peleg'",
+      "rs": "10"
+    }
+  ]
+}

@@ -1,18 +1,21 @@
 package sygus
 
 import ast.ASTNode
-import enumeration.{InputsValuesManager}
+import enumeration.InputsValuesManager
 import org.antlr.v4.runtime.{BufferedTokenStream, CharStreams, RecognitionException, Token}
 
 import util.control.Breaks._
 import scala.concurrent.duration._
-import trace.DebugPrints.{iprintln}
+import trace.DebugPrints.{dprintln, iprintln}
+
+import scala.io.Source.fromFile
 
 object Main extends App {
   val filename =
   //"src/test/benchmarks/euphony/extract-word-that-begins-with-specific-character.sl"
   //"src/test/benchmarks/too-hard/43606446.sl"
-  "src/test/benchmarks/euphony-test/11604909.sl"
+  //"src/test/benchmarks/euphony-test/11604909.sl"
+  "src/test/resources/old_benchmarks/get_middle.examples.json"
 
   case class ExpectedEOFException() extends Exception
 
@@ -46,7 +49,7 @@ object Main extends App {
     }
   }
 
-  def synthesizeTask(filename: String, task: SygusFileTask, sizeBased: Boolean, probBased: Boolean, timeout: Int = 600): List[ASTNode] = {
+  def synthesizeSyGus(filename: String, task: SygusFileTask, sizeBased: Boolean, probBased: Boolean, timeout: Int = 600): List[ASTNode] = {
     val oeManager = new InputsValuesManager()
 
     val enumerator =  if (!sizeBased) new enumeration.Enumerator(task.vocab, oeManager, task.examples.map(_.input))
@@ -76,15 +79,69 @@ object Main extends App {
     p
   }
 
+  def synthesizePython(task: PySynthesisTask, timeout: Int = 7) : Option[(String, Int)] =
+  {
+    var rs: Option[(String, Int)] = None
+    val oeManager = new InputsValuesManager()
+    val enumerator = new enumeration.PyEnumerator(
+      task.vocab,
+      oeManager,
+      task.examples.map(_.input))
+    val deadline = timeout.seconds.fromNow
+
+    breakable {
+      for ((program, i) <- enumerator.zipWithIndex) {
+        if (!deadline.hasTimeLeft || program.height > 3) {
+          rs = Some(("None", timeout * 1000 - deadline.timeLeft.toMillis.toInt))
+          break
+        }
+
+        if (program.nodeType == task.returnType) {
+          val results = task.examples
+            .zip(program.values)
+            .map(pair => pair._1.output == pair._2)
+          if (results.forall(identity)) {
+            if (program.usesVariables) {
+              rs = Some(
+                (task.asInstanceOf[sygus.PythonPBETask].outputVar + " = " + PostProcessor.clean(program).code,
+                  timeout * 1000 - deadline.timeLeft.toMillis.toInt))
+              println(rs.get._1)
+              break
+            }
+            else {
+              oeManager.classValues.remove(program.values)
+            }
+          }
+        }
+
+        if (trace.DebugPrints.debug) {
+          val p = PostProcessor.clean(program)
+          println(s"[$i] (${program.height}) ${p.code}")
+        }
+      }
+    }
+
+    rs
+  }
+
+
   def synthesize(filename: String, sizeBased: Boolean = false, probBased: Boolean = false) = {
     val task = new SygusFileTask(scala.io.Source.fromFile(filename).mkString)
     assert(task.isPBE)
-    synthesizeTask(filename, task, sizeBased, probBased)
+    synthesizeSyGus(filename, task, sizeBased, probBased)
+  }
+
+  def pySynthesize(filename: String) : Option[(String, Int)] =
+  {
+    val task: PySynthesisTask = PythonPBETask.fromString(fromFile(filename).mkString)
+    synthesizePython(task)
   }
 
   trace.DebugPrints.setInfo()
   //SyGus or Python Benchmark
   if (filename.endsWith(".sl"))
     synthesize(filename)
+  else if (filename.endsWith(".json"))
+    pySynthesize(filename)
 
 }

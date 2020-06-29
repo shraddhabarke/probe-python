@@ -1,0 +1,13 @@
+{
+  "varName": "rs",
+  "env": [
+    {
+      "s": "'hello'",
+      "rs": "'olleh'"
+    },
+    {
+      "s": "'world'",
+      "rs": "'dlrow'"
+    }
+  ]
+}
