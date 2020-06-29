@@ -1,10 +1,10 @@
 package vocab
 
 import ast.{ASTNode}
-import ast.Types.Types
 import enumeration.{ChildrenIterator}
 
 trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
+
   var childIterator: Iterator[List[ASTNode]] = _
   var contexts: List[Map[String, Any]] = _
 

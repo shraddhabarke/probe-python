@@ -2,14 +2,14 @@ package vocab
 
 import ast.Types.Types
 import ast._
-import enumeration.{Enumerator, InputsValuesManager}
+import enumeration.{PyEnumerator, InputsValuesManager}
 
-abstract class MapCompVocabMaker(iterableType: Types, valueType: Types) extends VocabMaker with Iterator[ASTNode]
+abstract class MapCompVocabMaker(iterableType: Types, valueType: Types) extends PyVocabMaker with Iterator[ASTNode]
 {
   override val arity: Int = 3
 
   var listIter: Iterator[ASTNode] = _
-  var mapVocab: VocabFactory = _
+  var mapVocab: PyVocabFactory = _
   var contexts: List[Map[String, Any]] = _
 
   var enumerator: Iterator[ASTNode] = _
@@ -32,7 +32,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types) extends 
   override def init(
                      progs: List[ASTNode],
                      contexts : List[Map[String, Any]],
-                     vocabFactory: VocabFactory,
+                     vocabFactory: PyVocabFactory,
                      height: Int) : Iterator[ASTNode] =
   {
     this.listIter = progs.filter(n => n.nodeType.equals(this.iterableType)).iterator
@@ -47,32 +47,29 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types) extends 
     // Filter the vocabs for the map function
     // TODO There has to be a more efficient way
     val newVarVocab = this.iterableType match {
-      case Types.PyString => new BasicVocabMaker {
+      case Types.PyString => new PyBasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyString
         override val nodeType: Class[_ <: ASTNode] = classOf[PyStringVariable]
-        override val head: String = varName
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyStringVariable(varName, contexts)
       }
-      case Types.List(Types.PyString) => new BasicVocabMaker {
+      case Types.List(Types.PyString) => new PyBasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyString
         override val nodeType: Class[_ <: ASTNode] = classOf[PyStringVariable]
-        override val head: String = varName
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyStringVariable(varName, contexts)
       }
-      case Types.List(Types.PyInt) => new BasicVocabMaker {
+      case Types.List(Types.PyInt) => new PyBasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyInt
         override val nodeType: Class[_ <: ASTNode] = classOf[PyIntVariable]
-        override val head: String = varName
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyIntVariable(varName, contexts)
@@ -82,9 +79,9 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types) extends 
     // We don't support nested list comprehensions
     val vocabs = newVarVocab ::
       vocabFactory.leavesMakers :::
-      vocabFactory.nodeMakers.filter(_.isInstanceOf[BasicVocabMaker])
+      vocabFactory.nodeMakers.filter(_.isInstanceOf[PyBasicVocabMaker])
 
-    this.mapVocab = VocabFactory.apply(vocabs)
+    this.mapVocab = PyVocabFactory.apply(vocabs)
     this.nextList()
     this
   }
@@ -120,7 +117,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types) extends 
         // next is a valid program
         val node = this.makeNode(
           this.currList,
-          new PyStringVariable(varName, this.enumerator.asInstanceOf[Enumerator].contexts),
+          new PyStringVariable(varName, this.enumerator.asInstanceOf[PyEnumerator].contexts),
           value)
         this.nextProg = Some(node)
       }
@@ -141,7 +138,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types) extends 
             .map(c => c.toString)
             .map(value => context._1 + (this.varName -> value)))
         val oeValuesManager = new InputsValuesManager()
-        this.enumerator = new Enumerator(this.mapVocab, oeValuesManager, newContexts)
+        this.enumerator = new PyEnumerator(this.mapVocab, oeValuesManager, newContexts)
         done = true
       }
     }
@@ -150,12 +147,12 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types) extends 
   }
 }
 
-abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types) extends VocabMaker with Iterator[ASTNode]
+abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types) extends PyVocabMaker with Iterator[ASTNode]
 {
   override val arity: Int = 2
 
   var mapIter: Iterator[ASTNode] = _
-  var filterVocab: VocabFactory = _
+  var filterVocab: PyVocabFactory = _
   var contexts: List[Map[String, Any]] = _
 
   var enumerator: Iterator[ASTNode] = _
@@ -175,7 +172,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types) extends V
 
   override def init(progs: List[ASTNode],
                      contexts : List[Map[String, Any]],
-                     vocabFactory: VocabFactory,
+                     vocabFactory: PyVocabFactory,
                      height: Int) : Iterator[ASTNode] =
   {
     this.mapIter = progs.filter(n => n.isInstanceOf[VariableNode[_]] && n.nodeType.equals(Types.Map(keyType, valueType))).iterator
@@ -190,23 +187,20 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types) extends V
     // Filter the vocabs for the map function
     // TODO There has to be a more efficient way
     val newVarVocab = this.keyType match {
-      case Types.PyString => new BasicVocabMaker {
+      case Types.PyString => new PyBasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyString
         override val nodeType: Class[_ <: ASTNode] = classOf[PyStringVariable]
-        override val head: String = keyName
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyStringVariable(keyName, contexts)
       }
-      case Types.PyInt => new BasicVocabMaker {
+      case Types.PyInt => new PyBasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyInt
         override val nodeType: Class[_ <: ASTNode] = classOf[PyIntVariable]
-        override val head: String = keyName
-
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyIntVariable(keyName, contexts)
@@ -216,9 +210,9 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types) extends V
     // We don't support nested list comprehensions
     val vocabs = newVarVocab ::
       vocabFactory.leavesMakers :::
-      vocabFactory.nodeMakers.filter(_.isInstanceOf[BasicVocabMaker])
+      vocabFactory.nodeMakers.filter(_.isInstanceOf[PyBasicVocabMaker])
 
-    this.filterVocab = VocabFactory.apply(vocabs)
+    this.filterVocab = PyVocabFactory.apply(vocabs)
     this.nextMap()
     this
   }
@@ -275,7 +269,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types) extends V
                 .asInstanceOf[Map[String, Int]].keys
                 .map(key => context._1 + (this.keyName -> key)))
         val oeValuesManager = new InputsValuesManager()
-        this.enumerator = new Enumerator(this.filterVocab, oeValuesManager, newContexts)
+        this.enumerator = new PyEnumerator(this.filterVocab, oeValuesManager, newContexts)
         done = true
       }
     }
