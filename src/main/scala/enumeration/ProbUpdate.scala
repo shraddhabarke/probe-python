@@ -1,7 +1,5 @@
 package enumeration
 
-import java.io.FileOutputStream
-
 import ast._
 import sygus.SygusFileTask
 import vocab.VocabFactory
@@ -9,9 +7,6 @@ import vocab.VocabFactory
 import scala.collection.mutable
 
 object ProbUpdate {
-  var fos = new FileOutputStream("example-all.txt", true)
-  var phaseChange: Boolean = false
-  var newPrior = 0.0
   var fitCost = mutable.Map[Set[Any], Double]()
   var fitProgs: mutable.ArrayBuffer[String] = mutable.ArrayBuffer()
   var fitMap = mutable.Map[(Class[_],Option[Any]), Double]()
