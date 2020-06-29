@@ -5,6 +5,7 @@ import org.scalatestplus.junit.JUnitSuite
 import org.junit.Test
 import org.junit.Assert._
 import sygus.{SyGuSLexer, SyGuSParser, SygusFileTask}
+import vocab.VocabFactory
 
 import collection.JavaConverters._
 
@@ -22,7 +23,7 @@ class EnumeratorTests  extends JUnitSuite{
     val nonTerminals = grammarDef.groupedRuleList().asScala.map{nonTerminal =>
       nonTerminal.Symbol().getSymbol.getText -> Types.withName(nonTerminal.sort().getText)
     }.toMap
-    val vocab = ast.VocabFactory(
+    val vocab = VocabFactory(
       grammarDef.groupedRuleList().asScala.flatMap{nonTerminal => nonTerminal.gTerm().asScala.map(vocabElem =>
         SygusFileTask.makeVocabMaker(vocabElem, Types.withName(nonTerminal.sort().getText),nonTerminals))}.toList
     )
@@ -87,7 +88,7 @@ class EnumeratorTests  extends JUnitSuite{
     val nonTerminals = grammarDef.groupedRuleList().asScala.map{nonTerminal =>
       nonTerminal.Symbol().getSymbol.getText -> Types.withName(nonTerminal.sort().getText)
     }.toMap
-    val vocab = ast.VocabFactory(
+    val vocab = VocabFactory(
       grammarDef.groupedRuleList().asScala.flatMap{nonTerminal => nonTerminal.gTerm().asScala.map(vocabElem =>
         SygusFileTask.makeVocabMaker(vocabElem, Types.withName(nonTerminal.sort().getText),nonTerminals))}.toList
     )
@@ -114,7 +115,7 @@ class EnumeratorTests  extends JUnitSuite{
     val nonTerminals = grammarDef.groupedRuleList().asScala.map{nonTerminal =>
       nonTerminal.Symbol().getSymbol.getText -> Types.withName(nonTerminal.sort().getText)
     }.toMap
-    val vocab = ast.VocabFactory(
+    val vocab = VocabFactory(
       grammarDef.groupedRuleList().asScala.flatMap{nonTerminal => nonTerminal.gTerm().asScala.map(vocabElem =>
         SygusFileTask.makeVocabMaker(vocabElem, Types.withName(nonTerminal.sort().getText),nonTerminals))}.toList
     )
@@ -140,7 +141,7 @@ class EnumeratorTests  extends JUnitSuite{
     val nonTerminals = grammarDef.groupedRuleList().asScala.map{nonTerminal =>
       nonTerminal.Symbol().getSymbol.getText -> Types.withName(nonTerminal.sort().getText)
     }.toMap
-    val vocab = ast.VocabFactory(
+    val vocab = VocabFactory(
       grammarDef.groupedRuleList().asScala.flatMap{nonTerminal => nonTerminal.gTerm().asScala.map(vocabElem =>
         SygusFileTask.makeVocabMaker(vocabElem, Types.withName(nonTerminal.sort().getText),nonTerminals))}.toList
     )
@@ -161,7 +162,7 @@ class EnumeratorTests  extends JUnitSuite{
     val nonTerminals = grammarDef.groupedRuleList().asScala.map{nonTerminal =>
       nonTerminal.Symbol().getSymbol.getText -> Types.withName(nonTerminal.sort().getText)
     }.toMap
-    val vocab = ast.VocabFactory(
+    val vocab = VocabFactory(
       grammarDef.groupedRuleList().asScala.flatMap{nonTerminal => nonTerminal.gTerm().asScala.map(vocabElem =>
         SygusFileTask.makeVocabMaker(vocabElem, Types.withName(nonTerminal.sort().getText),nonTerminals))}.toList
     )

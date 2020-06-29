@@ -4,6 +4,7 @@ import org.antlr.v4.runtime.{BufferedTokenStream, CharStreams}
 import org.junit.Test
 import org.junit.Assert._
 import org.scalatestplus.junit.JUnitSuite
+import vocab.{BasicVocabMaker, VocabMaker}
 
 class VocabTests  extends JUnitSuite{
   def readVocabElem(elemLine: String) = {
@@ -20,7 +21,7 @@ class VocabTests  extends JUnitSuite{
   @Test def boolLiteralMaker(): Unit =  {
     val vocabLine = "(ntBool Bool (false))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(0,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     val node = maker(Nil,Map.empty[String,AnyRef] :: Nil)
@@ -32,7 +33,7 @@ class VocabTests  extends JUnitSuite{
   @Test def intLiteralMaker(): Unit =  {
     val vocabLine = "(ntInt Int (-1))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(0,maker.arity)
     assertEquals(Types.Int,maker.returnType)
     val node = maker(Nil,Map.empty[String,AnyRef] :: Nil)
@@ -43,7 +44,7 @@ class VocabTests  extends JUnitSuite{
   @Test def stringLiteralMaker(): Unit = {
     val vocabLine = "(ntString String (\" \"))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(0,maker.arity)
     assertEquals(Types.String,maker.returnType)
     val node = maker(Nil,Map.empty[String,AnyRef] :: Nil)
@@ -55,7 +56,7 @@ class VocabTests  extends JUnitSuite{
   @Test def boolVarMaker: Unit = {
     val vocabLine = "(ntBool Bool (b))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(0,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     val node = maker(Nil,Map("b" -> false) :: Map("b" -> true) :: Nil)
@@ -67,7 +68,7 @@ class VocabTests  extends JUnitSuite{
   @Test def intVarMaker: Unit = {
     val vocabLine = "(ntInt Int (_arg0_))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(0,maker.arity)
     assertEquals(Types.Int,maker.returnType)
     val node = maker(Nil,Map("_arg0_" -> 0) :: Map("_arg0_" -> -88) :: Nil)
@@ -78,7 +79,7 @@ class VocabTests  extends JUnitSuite{
   @Test def stringVarMaker: Unit = {
     val vocabLine = "(ntString String (str))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(0,maker.arity)
     assertEquals(Types.String,maker.returnType)
     val node = maker(Nil,Map("str" -> "") :: Map("str" -> "abc") :: Nil)
@@ -90,7 +91,7 @@ class VocabTests  extends JUnitSuite{
   @Test def intToStringMaker: Unit = {
     val vocabLine = "(ntString String ((int.to.str ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(1,maker.arity)
     assertEquals(Types.String,maker.returnType)
     assertEquals(Types.Int,maker.childTypes(0))
@@ -102,7 +103,7 @@ class VocabTests  extends JUnitSuite{
   @Test def stringToIntMaker: Unit = {
     val vocabLine = "(ntInt Int ((str.to.int ntString)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(1,maker.arity)
     assertEquals(Types.Int,maker.returnType)
     assertEquals(List(Types.String),maker.childTypes)
@@ -114,7 +115,7 @@ class VocabTests  extends JUnitSuite{
   @Test def stringLenMaker: Unit = {
     val vocabLine = "(ntInt Int ((str.len ntString)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(1,maker.arity)
     assertEquals(Types.Int,maker.returnType)
     assertEquals(List(Types.String),maker.childTypes)
@@ -127,7 +128,7 @@ class VocabTests  extends JUnitSuite{
   @Test def strConcatMaker: Unit = {
     val vocabLine = "(ntString String ((str.++ ntString ntString)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.String,maker.returnType)
     assertEquals(List(Types.String,Types.String),maker.childTypes)
@@ -139,7 +140,7 @@ class VocabTests  extends JUnitSuite{
   @Test def strAtMaker: Unit = {
     val vocabLine = "(ntString String ((str.at ntString ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.String,maker.returnType)
     assertEquals(List(Types.String,Types.Int),maker.childTypes)
@@ -151,7 +152,7 @@ class VocabTests  extends JUnitSuite{
   @Test def intAddMaker:Unit = {
     val vocabLine = "(ntInt Int ((+ ntInt ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Int,maker.returnType)
     assertEquals(List(Types.Int,Types.Int),maker.childTypes)
@@ -163,7 +164,7 @@ class VocabTests  extends JUnitSuite{
   @Test def intSubMaker: Unit = {
     val vocabLine = "(ntInt Int ((- ntInt ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Int,maker.returnType)
     assertEquals(List(Types.Int,Types.Int),maker.childTypes)
@@ -176,7 +177,7 @@ class VocabTests  extends JUnitSuite{
   @Test def strReplaceMaker: Unit = {
     val vocabLine = "(ntString String ((str.replace ntString ntString ntString)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(3,maker.arity)
     assertEquals(Types.String,maker.returnType)
     assertEquals(List(Types.String,Types.String,Types.String),maker.childTypes)
@@ -188,7 +189,7 @@ class VocabTests  extends JUnitSuite{
   @Test def stringITEMaker: Unit = {
     val vocabLine = "(ntString String ((ite ntBool ntString ntString)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(3,maker.arity)
     assertEquals(Types.String,maker.returnType)
     assertEquals(List(Types.Bool,Types.String,Types.String),maker.childTypes)
@@ -200,7 +201,7 @@ class VocabTests  extends JUnitSuite{
   @Test def intITEMaker: Unit = {
     val vocabLine = "(ntInt Int ((ite ntBool ntInt ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(3,maker.arity)
     assertEquals(Types.Int,maker.returnType)
     assertEquals(List(Types.Bool,Types.Int,Types.Int),maker.childTypes)
@@ -212,7 +213,7 @@ class VocabTests  extends JUnitSuite{
   @Test def substringMaker: Unit = {
     val vocabLine = "(ntString String ((str.substr ntString ntInt ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(3,maker.arity)
     assertEquals(Types.String,maker.returnType)
     assertEquals(List(Types.String,Types.Int,Types.Int),maker.childTypes)
@@ -224,7 +225,7 @@ class VocabTests  extends JUnitSuite{
   @Test def indexOfMaker: Unit = {
     val vocabLine = "(ntInt Int ((str.indexof ntString ntString ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(3,maker.arity)
     assertEquals(Types.Int,maker.returnType)
     assertEquals(List(Types.String,Types.String,Types.Int),maker.childTypes)
@@ -236,7 +237,7 @@ class VocabTests  extends JUnitSuite{
   @Test def lteMaker: Unit = {
     val vocabLine = "(ntBool Bool ((<= ntInt ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     assertEquals(List(Types.Int,Types.Int),maker.childTypes)
@@ -249,7 +250,7 @@ class VocabTests  extends JUnitSuite{
   @Test def eqMaker: Unit = {
     val vocabLine = "(ntBool Bool ((= ntInt ntInt)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     assertEquals(List(Types.Int,Types.Int),maker.childTypes)
@@ -262,7 +263,7 @@ class VocabTests  extends JUnitSuite{
   @Test def prefixOfMaker: Unit = {
     val vocabLine = "(ntBool Bool ((str.prefixof ntString ntString)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     assertEquals(List(Types.String,Types.String),maker.childTypes)
@@ -275,7 +276,7 @@ class VocabTests  extends JUnitSuite{
   @Test def suffixOfMaker: Unit = {
     val vocabLine = "(ntBool Bool ((str.suffixof ntString ntString)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     assertEquals(List(Types.String,Types.String),maker.childTypes)
@@ -288,7 +289,7 @@ class VocabTests  extends JUnitSuite{
   @Test def containsMaker: Unit = {
     val vocabLine = "(ntBool Bool ((str.contains ntString ntString)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     assertEquals(List(Types.String,Types.String),maker.childTypes)
@@ -301,7 +302,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvLiteralMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) (#x0000000000000006))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(0,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(Nil,maker.childTypes)
@@ -314,7 +315,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvAndMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvand nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -327,7 +328,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvOrMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvor nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -340,7 +341,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvXorMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvxor nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -353,7 +354,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvNotMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvnot nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(1,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64),maker.childTypes)
@@ -366,7 +367,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvShiftLeftMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvshl nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -379,7 +380,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvAShiftRightMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvashr nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -392,7 +393,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvLShiftRightMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvlshr nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -405,7 +406,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvNegMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvneg nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(1,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64),maker.childTypes)
@@ -418,7 +419,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvAddMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvadd nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -431,7 +432,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvSubMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvsub nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -444,7 +445,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvSDivMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvsdiv nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -457,7 +458,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvUDivMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvudiv nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -470,7 +471,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvMulMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvmul nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -483,7 +484,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvVarMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) (bv0))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(0,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     val node = maker(Nil,Map("bv0" -> Long.MaxValue) :: Map("bv0" -> 0L) :: Nil)
@@ -495,7 +496,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvEqualsMaker: Unit = {
     val vocabLine = "(ntBool Bool ((= nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     val ctx = Map("bv0" -> Long.MaxValue) :: Map("bv0" -> 0L) :: Nil
@@ -508,7 +509,7 @@ class VocabTests  extends JUnitSuite{
   @Test def logicalAndsMaker: Unit = {
     val vocabLine = "(ntBool Bool ((and ntBool ntBool)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     val node = maker(List(new BoolLiteral(true,1), new BoolLiteral(false,1)),Map.empty[String,AnyRef] :: Nil)
@@ -520,7 +521,7 @@ class VocabTests  extends JUnitSuite{
   @Test def logicalOrMaker: Unit = {
     val vocabLine = "(ntBool Bool ((or ntBool ntBool)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     val node = maker(List(new BoolLiteral(true,1), new BoolLiteral(false,1)),Map.empty[String,AnyRef] :: Nil)
@@ -531,7 +532,7 @@ class VocabTests  extends JUnitSuite{
   @Test def logicalNotMaker: Unit = {
     val vocabLine = "(ntBool Bool ((not ntBool)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(1,maker.arity)
     assertEquals(Types.Bool,maker.returnType)
     assertEquals(List(Types.Bool),maker.childTypes)
@@ -543,7 +544,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvITEMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((ite ntBool nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(3,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.Bool,Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -555,7 +556,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvSRemMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvsrem nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)
@@ -567,7 +568,7 @@ class VocabTests  extends JUnitSuite{
   @Test def bvURemMaker: Unit = {
     val vocabLine = "(nBitVec (BitVec 64) ((bvurem nBitVec nBitVec)))"
     val parsed = readVocabElem(vocabLine)
-    val maker: VocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
+    val maker: BasicVocabMaker = SygusFileTask.makeVocabMaker(parsed._1,Types.withName(parsed._2), nonTerminals)
     assertEquals(2,maker.arity)
     assertEquals(Types.BitVec64,maker.returnType)
     assertEquals(List(Types.BitVec64,Types.BitVec64),maker.childTypes)

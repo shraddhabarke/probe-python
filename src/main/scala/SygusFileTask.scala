@@ -7,9 +7,7 @@ import Logic.Logic
 import sygus.SyGuSParser.TermContext
 import ast._
 import ast.Types.Types
-import jdk.nashorn.internal.runtime.BitVector
-import scala.collection.BitSet
-
+import vocab.{BasicVocabMaker, VocabFactory}
 
 object Logic extends Enumeration{
   type Logic = Value
@@ -61,13 +59,6 @@ class SygusFileTask(content: String) extends Cloneable{
         !nonTerminals.contains(vocabElem.bfTerm().identifier().Symbol().getText)
       ).map { vocabElem =>
         SygusFileTask.makeVocabMaker(vocabElem, Types.withName(nonTerminal.sort().getText.replaceAllLiterally("(","").replaceAllLiterally(")","")),nonTerminals)
-//        if (!) //operator or func name
-//              SygusFileTask.makeVocabMaker(
-//                  ,
-//                  ,
-//                  nonTerminal.sort().getText,
-//                  vocabElem.bfTerm().bfTerm().asScala.map(child => nonTerminals(child.identifier().Symbol().getText))
-//              ).mkString("|")
 
       }
     }.sortBy(maker => if (maker.arity > 0 && maker.returnType.toString == functionReturnType.toString) -1 else 0)
@@ -89,12 +80,12 @@ class SygusFileTask(content: String) extends Cloneable{
 }
 
 object SygusFileTask{
-  def makeVocabMaker(vocabElem: SyGuSParser.GTermContext, retType: Types, nonTerminalTypes: Map[String,Types]): VocabMaker =
+  def makeVocabMaker(vocabElem: SyGuSParser.GTermContext, retType: Types, nonTerminalTypes: Map[String,Types]): BasicVocabMaker =
     if (vocabElem.bfTerm().literal() != null) //literal
       retType match {
         case Types.Int => {
           val lit = vocabElem.bfTerm().literal().Numeral().getText.toInt
-          new VocabMaker {
+          new BasicVocabMaker {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = retType
@@ -105,7 +96,7 @@ object SygusFileTask{
         }
         case Types.String => {
           val lit = literalToAny(vocabElem.bfTerm().literal(),retType).asInstanceOf[String]
-          new VocabMaker {
+          new BasicVocabMaker {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = retType
@@ -116,7 +107,7 @@ object SygusFileTask{
         }
         case Types.Bool => {
           val lit = vocabElem.bfTerm().literal().BoolConst().getSymbol.getText.toBoolean
-          new VocabMaker {
+          new BasicVocabMaker {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = retType
@@ -129,7 +120,7 @@ object SygusFileTask{
           val lit = if (vocabElem.bfTerm().literal().BinConst() != null)
             java.lang.Long.parseUnsignedLong(vocabElem.bfTerm().literal().BinConst().getText.drop(2),2)
           else java.lang.Long.parseUnsignedLong(vocabElem.bfTerm().literal().HexConst().getText.drop(2),16)
-          new VocabMaker {
+          new BasicVocabMaker {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = retType
@@ -142,7 +133,7 @@ object SygusFileTask{
     else if (vocabElem.bfTerm().identifier() != null && vocabElem.bfTerm().bfTerm().isEmpty)
       if (retType == Types.Int && vocabElem.bfTerm().identifier().getText.matches("-[1-9][0-9]*")) {//actually a negative number
         val lit = vocabElem.bfTerm().identifier().getText.toInt
-        new VocabMaker {
+        new BasicVocabMaker {
           override val arity: Int = 0
           override val childTypes: List[Types] = Nil
           override val returnType: Types = retType
@@ -161,7 +152,7 @@ object SygusFileTask{
       val childrenTypes = vocabElem.bfTerm().bfTerm().asScala.map(child => nonTerminalTypes(child.identifier().Symbol().getText)).toList
 
       (funcName,retType,arity) match {
-        case ("str.++",Types.String,2) => new VocabMaker {
+        case ("str.++",Types.String,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -171,7 +162,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new StringConcat(children(0).asInstanceOf[StringNode],children(1).asInstanceOf[StringNode])
         }
-        case ("str.replace",Types.String,3) => new VocabMaker {
+        case ("str.replace",Types.String,3) => new BasicVocabMaker {
           override val arity: Int = 3
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -181,7 +172,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new StringReplace(children(0).asInstanceOf[StringNode],children(1).asInstanceOf[StringNode],children(2).asInstanceOf[StringNode])
         }
-        case ("str.at",Types.String,2) => new VocabMaker {
+        case ("str.at",Types.String,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -191,7 +182,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new StringAt(children(0).asInstanceOf[StringNode],children(1).asInstanceOf[IntNode])
         }
-        case ("int.to.str",Types.String,1) => new VocabMaker {
+        case ("int.to.str",Types.String,1) => new BasicVocabMaker {
           override val arity: Int = 1
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -201,7 +192,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new IntToString(children(0).asInstanceOf[IntNode])
         }
-        case ("ite",Types.String,3) => new VocabMaker {
+        case ("ite",Types.String,3) => new BasicVocabMaker {
           override val arity: Int = 3
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -211,7 +202,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new StringITE(children(0).asInstanceOf[BoolNode],children(1).asInstanceOf[StringNode],children(2).asInstanceOf[StringNode])
         }
-        case ("str.substr",Types.String,3) => new VocabMaker {
+        case ("str.substr",Types.String,3) => new BasicVocabMaker {
           override val arity: Int = 3
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -221,7 +212,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new Substring(children(0).asInstanceOf[StringNode],children(1).asInstanceOf[IntNode],children(2).asInstanceOf[IntNode])
         }
-        case ("+",Types.Int,2) => new VocabMaker {
+        case ("+",Types.Int,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -231,7 +222,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new IntAddition(children(0).asInstanceOf[IntNode],children(1).asInstanceOf[IntNode])
         }
-        case ("-", Types.Int,2) => new VocabMaker {
+        case ("-", Types.Int,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -241,7 +232,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new IntSubtraction(children(0).asInstanceOf[IntNode],children(1).asInstanceOf[IntNode])
         }
-        case ("str.len",Types.Int,1) => new VocabMaker {
+        case ("str.len",Types.Int,1) => new BasicVocabMaker {
           override val arity: Int = 1
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -252,7 +243,7 @@ object SygusFileTask{
             new StringLength(children(0).asInstanceOf[StringNode])
 
         }
-        case ("str.to.int",Types.Int,1) => new VocabMaker {
+        case ("str.to.int",Types.Int,1) => new BasicVocabMaker {
           override val arity: Int = 1
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -262,7 +253,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new StringToInt(children(0).asInstanceOf[StringNode])
         }
-        case ("ite",Types.Int,3) => new VocabMaker {
+        case ("ite",Types.Int,3) => new BasicVocabMaker {
           override val arity: Int = 3
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -272,7 +263,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new IntITE(children(0).asInstanceOf[BoolNode],children(1).asInstanceOf[IntNode],children(2).asInstanceOf[IntNode])
         }
-        case ("str.indexof",Types.Int,3) => new VocabMaker {
+        case ("str.indexof",Types.Int,3) => new BasicVocabMaker {
           override val arity: Int = 3
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -282,7 +273,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new IndexOf(children(0).asInstanceOf[StringNode],children(1).asInstanceOf[StringNode],children(2).asInstanceOf[IntNode])
         }
-        case ("<=", Types.Bool,2) => new VocabMaker {
+        case ("<=", Types.Bool,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -293,7 +284,7 @@ object SygusFileTask{
             new IntLessThanEq(children(0).asInstanceOf[IntNode], children(1).asInstanceOf[IntNode])
         }
         case ("=",Types.Bool,2) => childrenTypes match {
-          case List(Types.Int,Types.Int) => new VocabMaker {
+          case List(Types.Int,Types.Int) => new BasicVocabMaker {
             override val arity: Int = 2
             override val childTypes: List[Types] = childrenTypes
             override val returnType: Types = retType
@@ -303,7 +294,7 @@ object SygusFileTask{
             override def apply (children: List[ASTNode], contexts: List[Map[String, Any]] ): ASTNode =
             new IntEquals (children (0).asInstanceOf[IntNode], children (1).asInstanceOf[IntNode] )
           }
-          case List(Types.BitVec64,Types.BitVec64) => new VocabMaker {
+          case List(Types.BitVec64,Types.BitVec64) => new BasicVocabMaker {
             override val arity: Int = 2
             override val childTypes: List[Types] = childrenTypes
             override val returnType: Types = retType
@@ -314,7 +305,7 @@ object SygusFileTask{
               new BVEquals(children (0).asInstanceOf[BVNode], children (1).asInstanceOf[BVNode] )
           }
         }
-        case ("str.prefixof", Types.Bool,2) => new VocabMaker {
+        case ("str.prefixof", Types.Bool,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -324,7 +315,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PrefixOf(children(0).asInstanceOf[StringNode], children(1).asInstanceOf[StringNode])
         }
-        case ("str.suffixof", Types.Bool,2) => new VocabMaker {
+        case ("str.suffixof", Types.Bool,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -334,7 +325,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new SuffixOf(children(0).asInstanceOf[StringNode], children(1).asInstanceOf[StringNode])
         }
-        case ("str.contains", Types.Bool,2) => new VocabMaker {
+        case ("str.contains", Types.Bool,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -344,7 +335,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new Contains(children(0).asInstanceOf[StringNode],children(1).asInstanceOf[StringNode])
         }
-        case ("bvand",Types.BitVec64,2) => new VocabMaker {
+        case ("bvand",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -354,7 +345,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVAnd(children(0).asInstanceOf[BVNode],children(1).asInstanceOf[BVNode])
         }
-        case ("bvor",Types.BitVec64,2) => new VocabMaker {
+        case ("bvor",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -364,7 +355,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVOr(children(0).asInstanceOf[BVNode],children(1).asInstanceOf[BVNode])
         }
-        case ("bvlshr",Types.BitVec64,2) => new VocabMaker {
+        case ("bvlshr",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -374,7 +365,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVShrLogical(children(0).asInstanceOf[BVNode],children(1).asInstanceOf[BVNode])
         }
-        case ("bvshl",Types.BitVec64,2) => new VocabMaker {
+        case ("bvshl",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -384,7 +375,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVShiftLeft(children(0).asInstanceOf[BVNode],children(1).asInstanceOf[BVNode])
         }
-        case ("bvashr",Types.BitVec64,2) => new VocabMaker {
+        case ("bvashr",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -394,7 +385,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVShrArithmetic(children(0).asInstanceOf[BVNode],children(1).asInstanceOf[BVNode])
         }
-        case ("bvnot",Types.BitVec64,1) => new VocabMaker {
+        case ("bvnot",Types.BitVec64,1) => new BasicVocabMaker {
           override val arity: Int = 1
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -404,7 +395,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVNot(children(0).asInstanceOf[BVNode])
         }
-        case ("bvxor",Types.BitVec64,2) => new VocabMaker {
+        case ("bvxor",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -414,7 +405,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVXor(children(0).asInstanceOf[BVNode], children(1).asInstanceOf[BVNode])
         }
-        case ("bvneg",Types.BitVec64,1) => new VocabMaker {
+        case ("bvneg",Types.BitVec64,1) => new BasicVocabMaker {
           override val arity: Int = 1
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -424,7 +415,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVNeg(children(0).asInstanceOf[BVNode])
         }
-        case ("bvsub",Types.BitVec64,2) => new VocabMaker {
+        case ("bvsub",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -434,7 +425,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVSub(children(0).asInstanceOf[BVNode], children(1).asInstanceOf[BVNode])
         }
-        case ("bvsdiv",Types.BitVec64,2) => new VocabMaker {
+        case ("bvsdiv",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -444,7 +435,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVSDiv(children(0).asInstanceOf[BVNode], children(1).asInstanceOf[BVNode])
         }
-        case ("bvudiv",Types.BitVec64,2) => new VocabMaker {
+        case ("bvudiv",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -454,7 +445,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVUDiv(children(0).asInstanceOf[BVNode], children(1).asInstanceOf[BVNode])
         }
-        case ("bvmul",Types.BitVec64,2) => new VocabMaker {
+        case ("bvmul",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -464,7 +455,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVMul(children(0).asInstanceOf[BVNode], children(1).asInstanceOf[BVNode])
         }
-        case ("bvadd",Types.BitVec64,2) => new VocabMaker {
+        case ("bvadd",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -474,7 +465,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVAdd(children(0).asInstanceOf[BVNode], children(1).asInstanceOf[BVNode])
         }
-        case ("and",Types.Bool,2) => new VocabMaker {
+        case ("and",Types.Bool,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -484,7 +475,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new LAnd(children(0).asInstanceOf[BoolNode], children(1).asInstanceOf[BoolNode])
         }
-        case ("or",Types.Bool,2) => new VocabMaker {
+        case ("or",Types.Bool,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -494,7 +485,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new LOr(children(0).asInstanceOf[BoolNode], children(1).asInstanceOf[BoolNode])
         }
-        case ("not",Types.Bool,1) => new VocabMaker {
+        case ("not",Types.Bool,1) => new BasicVocabMaker {
           override val arity: Int = 1
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -504,7 +495,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new LNot(children(0).asInstanceOf[BoolNode])
         }
-        case ("ite",Types.BitVec64,3) => new VocabMaker {
+        case ("ite",Types.BitVec64,3) => new BasicVocabMaker {
           override val arity: Int = 3
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -514,7 +505,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVITE(children(0).asInstanceOf[BoolNode],children(1).asInstanceOf[BVNode], children(2).asInstanceOf[BVNode])
         }
-        case ("bvsrem",Types.BitVec64,2) => new VocabMaker {
+        case ("bvsrem",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -524,7 +515,7 @@ object SygusFileTask{
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new BVSRem(children(0).asInstanceOf[BVNode], children(1).asInstanceOf[BVNode])
         }
-        case ("bvurem",Types.BitVec64,2) => new VocabMaker {
+        case ("bvurem",Types.BitVec64,2) => new BasicVocabMaker {
           override val arity: Int = 2
           override val childTypes: List[Types] = childrenTypes
           override val returnType: Types = retType
@@ -538,7 +529,7 @@ object SygusFileTask{
     }
 
   def variableVocabMaker(retType: Types.Types, varname: String) = retType match {
-    case Types.Int => new VocabMaker {
+    case Types.Int => new BasicVocabMaker {
       override val arity: Int = 0
       override val childTypes: List[Types] = Nil
       override val returnType: Types = retType
@@ -546,7 +537,7 @@ object SygusFileTask{
       override val nodeType: Class[_ <: ASTNode] = classOf[IntVariable]
       override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode = new IntVariable(varname,contexts)
     }
-    case Types.String => new VocabMaker {
+    case Types.String => new BasicVocabMaker {
       override val arity: Int = 0
       override val childTypes: List[Types] = Nil
       override val returnType: Types = retType
@@ -554,7 +545,7 @@ object SygusFileTask{
       override val nodeType: Class[_ <: ASTNode] = classOf[StringVariable]
       override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode = new StringVariable(varname,contexts)
     }
-    case Types.Bool => new VocabMaker {
+    case Types.Bool => new BasicVocabMaker {
       override val arity: Int = 0
       override val childTypes: List[Types] = Nil
       override val returnType: Types = retType
@@ -562,7 +553,7 @@ object SygusFileTask{
       override val nodeType: Class[_ <: ASTNode] = classOf[BoolVariable]
       override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode = new BoolVariable(varname,contexts)
     }
-    case Types.BitVec64 => new VocabMaker {
+    case Types.BitVec64 => new BasicVocabMaker {
       override val arity: Int = 0
       override val childTypes: List[Types] = Nil
       override val returnType: Types = retType

@@ -1,7 +1,8 @@
 package enumeration
 
-import ast.{ASTNode, VocabFactory, VocabMaker}
+import ast.ASTNode
 import trace.DebugPrints.dprintln
+import vocab.{VocabFactory, VocabMaker}
 
 import scala.collection.mutable
 
@@ -9,6 +10,14 @@ class Enumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val co
   override def toString(): String = "enumeration.Enumerator"
 
   var nextProgram: Option[ASTNode] = None
+
+  var currIter: Iterator[VocabMaker] = vocab.leaves
+  var prevLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
+  var currLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
+  var height = 0
+  var rootMaker: Iterator[ASTNode] =
+    currIter.next().init(currLevelProgs.toList, contexts, vocab, height)
+
   override def hasNext: Boolean = if (nextProgram.isDefined) true
   else {
     nextProgram = getNextProgram()
@@ -24,22 +33,27 @@ class Enumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val co
     res
   }
 
-  var currIter: Iterator[VocabMaker] = vocab.leaves
-  var childrenIterator: Iterator[List[ASTNode]] = Iterator.single(Nil)
-  var rootMaker: VocabMaker = currIter.next()
-  var prevLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
-  var currLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
-  var height = 0
-
+  /**
+   * This method moves the rootMaker to the next possible non-leaf. Note that this does not
+   * change the level/height of generated programs.
+   * @return False if we have exhausted all non-leaf AST nodes.
+   */
   def advanceRoot(): Boolean = {
-    if (!currIter.hasNext) return false
-    rootMaker = currIter.next()
-    childrenIterator = if (rootMaker.arity == 0)
-      Iterator.single(Nil)
-    else new ChildrenIterator(prevLevelProgs.toList,rootMaker.childTypes,height)
+    rootMaker = null
+    while (rootMaker == null || !rootMaker.hasNext) {
+      // We are out of programs!
+      if (!currIter.hasNext) return false
+      val next = currIter.next()
+      rootMaker = next.init(prevLevelProgs.toList, contexts, this.vocab, height)
+    }
+
     true
   }
 
+  /**
+   * This method resets the variables to begin enumerating the next level (taller) trees.
+   * @return False if the current level failed to generate any new programs.
+   */
   def changeLevel(): Boolean = {
     dprintln(currLevelProgs.length)
     if (currLevelProgs.isEmpty) return false
@@ -54,26 +68,27 @@ class Enumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val co
   def getNextProgram(): Option[ASTNode] = {
     var res : Option[ASTNode] = None
 
-    while(res.isEmpty) {
-      if (childrenIterator.hasNext) {
-        val children = childrenIterator.next()
-        if (rootMaker.canMake(children)) {
-          val prog = rootMaker(children,contexts)
-          if (oeManager.isRepresentative(prog))
-            res = Some(prog)
+    // Iterate while no non-equivalent program is found
+    while (res.isEmpty) {
+      if (rootMaker.hasNext) {
+        val prog = rootMaker.next
+
+        if (prog.values.nonEmpty && oeManager.isRepresentative(prog)) {
+          res = Some(prog)
         }
       }
       else if (currIter.hasNext) {
-        if (!advanceRoot())
-          return None
+        if (!advanceRoot()) {
+          if (!changeLevel()) return None
+        }
       }
-      else {
-        if (!changeLevel())
-          return None
+      else if (!changeLevel()) {
+        return None
       }
     }
-    println(currLevelProgs.takeRight(1).map(c => (c.code)))
     currLevelProgs += res.get
+    println(currLevelProgs.takeRight(1).map(c => (c.code)))
     res
   }
 }
+

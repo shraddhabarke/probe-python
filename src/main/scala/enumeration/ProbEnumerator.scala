@@ -1,8 +1,8 @@
 package enumeration
 
-import ast.{ASTNode, BVAdd, StringReplace, VocabFactory, VocabMaker}
-import enumeration.ProbUpdate.probMap
+import ast.ASTNode
 import sygus.SygusFileTask
+import vocab.{VocabFactory, VocabMaker}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer

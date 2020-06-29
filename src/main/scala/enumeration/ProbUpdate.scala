@@ -1,8 +1,11 @@
 package enumeration
 
-import java.io.{FileOutputStream}
+import java.io.FileOutputStream
+
 import ast._
 import sygus.SygusFileTask
+import vocab.VocabFactory
+
 import scala.collection.mutable
 
 object ProbUpdate {

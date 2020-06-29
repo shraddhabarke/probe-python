@@ -29,24 +29,8 @@ class InterpreterTests extends JUnitSuite {
     assert(ast != null)
   }
 
-  @Test def parseSyGuS(): Unit = {
-    assert(!interpretBenchmarks("src/test/benchmarks/syguscomp", identity))
-  }
-
-  @Test def parseContradiction(): Unit = {
-    assert(!interpretBenchmarks("src/test/benchmarks/modified_benchmarks/contradiction", filename => filename.dropRight(5) + ".sl"))
-  }
-
-  @Test def parseGarbage(): Unit = {
-    assert(!interpretBenchmarks("src/test/benchmarks/modified_benchmarks/returns_garbage", filename => filename.dropRight(5) + ".sl"))
-  }
-
   @Test def parseTooHard(): Unit = {
     assert(!interpretBenchmarks("src/test/benchmarks/too-hard",identity))
-  }
-
-  @Test def correctSyGuS(): Unit = {
-    assert(!interpretBenchmarks("src/test/benchmarks/syguscomp", identity, true))
   }
 
   @Test def correctTooHard(): Unit = {

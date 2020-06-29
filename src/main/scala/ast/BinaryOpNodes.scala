@@ -279,7 +279,7 @@ class BVEquals(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Boolean] w
 class LAnd(val lhs: BoolNode, val rhs: BoolNode) extends BinaryOpNode[Boolean] with BoolNode {
   override protected val parenless: Boolean = true
   override def doOp(l: Any, r: Any): Option[Boolean] = (l, r) match {
-    case (l: Long, r: Long) => Some(l.asInstanceOf[Boolean] && r.asInstanceOf[Boolean])
+    case (l: Boolean, r: Boolean) => Some(l.asInstanceOf[Boolean] && r.asInstanceOf[Boolean])
     case _ => wrongType(l, r)
   }
 
@@ -291,7 +291,7 @@ class LAnd(val lhs: BoolNode, val rhs: BoolNode) extends BinaryOpNode[Boolean] w
 class LOr(val lhs: BoolNode, val rhs: BoolNode) extends BinaryOpNode[Boolean] with BoolNode {
   override protected val parenless: Boolean = true
   override def doOp(l: Any, r: Any): Option[Boolean] = (l, r) match {
-    case (l: Long, r: Long) => Some(l.asInstanceOf[Boolean] || r.asInstanceOf[Boolean])
+    case (l: Boolean, r: Boolean) => Some(l.asInstanceOf[Boolean] || r.asInstanceOf[Boolean])
     case _ => wrongType(l, r)
   }
   override val code: String = "(or " + lhs.code + " " + rhs.code + ")"
