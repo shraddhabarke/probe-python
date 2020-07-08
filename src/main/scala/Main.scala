@@ -15,7 +15,8 @@ object Main extends App {
   //"src/test/benchmarks/euphony/extract-word-that-begins-with-specific-character.sl"
   //"src/test/benchmarks/too-hard/43606446.sl"
   //"src/test/benchmarks/euphony-test/11604909.sl"
-  "src/test/resources/old_benchmarks/get_middle.examples.json"
+  "src/test/resources/old_benchmarks/count_characters.examples.json"
+  //"src/test/resources/old_benchmarks/string_length.examples.json"
 
   case class ExpectedEOFException() extends Exception
 
@@ -79,19 +80,19 @@ object Main extends App {
     p
   }
 
-  def synthesizePython(task: PySynthesisTask, timeout: Int = 7) : Option[(String, Int)] =
+  def synthesizePython(task: PySynthesisTask, sizeBased: Boolean, timeout: Int = 7000) : Option[(String, Int)] =
   {
     var rs: Option[(String, Int)] = None
     val oeManager = new InputsValuesManager()
-    val enumerator = new enumeration.PyEnumerator(
+    val enumerator = if (!sizeBased) new enumeration.PyEnumerator(
       task.vocab,
       oeManager,
-      task.examples.map(_.input))
+      task.examples.map(_.input)) else new enumeration.PyProbEnumerator(task.vocab, oeManager, task.examples.map(_.input), false)
     val deadline = timeout.seconds.fromNow
 
     breakable {
       for ((program, i) <- enumerator.zipWithIndex) {
-        if (!deadline.hasTimeLeft || program.height > 3) {
+        if (!deadline.hasTimeLeft) { //TODO: fix this!
           rs = Some(("None", timeout * 1000 - deadline.timeLeft.toMillis.toInt))
           break
         }
@@ -105,7 +106,7 @@ object Main extends App {
               rs = Some(
                 (task.asInstanceOf[sygus.PythonPBETask].outputVar + " = " + PostProcessor.clean(program).code,
                   timeout * 1000 - deadline.timeLeft.toMillis.toInt))
-              println(rs.get._1)
+              println(rs.get._1, program.cost)
               break
             }
             else {
@@ -125,16 +126,16 @@ object Main extends App {
   }
 
 
-  def synthesize(filename: String, sizeBased: Boolean = false, probBased: Boolean = false) = {
+  def synthesize(filename: String, sizeBased: Boolean = true, probBased: Boolean = false) = {
     val task = new SygusFileTask(scala.io.Source.fromFile(filename).mkString)
     assert(task.isPBE)
     synthesizeSyGus(filename, task, sizeBased, probBased)
   }
 
-  def pySynthesize(filename: String) : Option[(String, Int)] =
+  def pySynthesize(filename: String, sizeBased: Boolean = true) : Option[(String, Int)] =
   {
-    val task: PySynthesisTask = PythonPBETask.fromString(fromFile(filename).mkString)
-    synthesizePython(task)
+    val task: PySynthesisTask = PythonPBETask.fromString(fromFile(filename).mkString, sizeBased)
+    synthesizePython(task, sizeBased)
   }
 
   trace.DebugPrints.setInfo()

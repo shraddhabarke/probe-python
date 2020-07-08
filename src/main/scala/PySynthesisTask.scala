@@ -93,7 +93,7 @@ object PythonPBETask
     else neType
   }
 
-  def fromString(jsonString: String): PythonPBETask =
+  def fromString(jsonString: String, size: Boolean): PythonPBETask =
   {
     val input = JsonParser.parse(jsonString).asInstanceOf[JObject].values
     val outputVarName: String = input("varName").asInstanceOf[String]
@@ -112,7 +112,7 @@ object PythonPBETask
         .filter(!_._2.equals(Types.Unknown))
         .toList
     val additionalLiterals = getStringLiterals(examples)
-    val vocab = PythonPBETask.vocabFactory(parameters,additionalLiterals)
+    val vocab = PythonPBETask.vocabFactory(parameters,additionalLiterals, size)
 
     val rs = new PythonPBETask(returnType, parameters, vocab, examples, outputVarName)
     trace.DebugPrints.dprintln(s"Solving Python PBE Task:\n\n$rs")
@@ -136,7 +136,7 @@ object PythonPBETask
     intersection.toList
   }
 
-  private def vocabFactory(variables: List[(String, Types.Value)], additionalLiterals: List[String]): PyVocabFactory =
+  private def vocabFactory(variables: List[(String, Types.Value)], additionalLiterals: List[String], size: Boolean): PyVocabFactory =
   {
     val defaultStringLiterals = List(" ")
     val stringLiterals = (defaultStringLiterals ++ additionalLiterals).distinct
@@ -371,54 +371,63 @@ object PythonPBETask
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PySortedStringList(children.head.asInstanceOf[ListNode[String]])
         },
-        new ListCompVocabMaker(Types.PyString, Types.PyString) {
+        new ListCompVocabMaker(Types.PyString, Types.PyString, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[StringToStringListCompNode]
           override def makeNode(lst: ASTNode, map: ASTNode): ASTNode =
             new StringToStringListCompNode(
               lst.asInstanceOf[ListNode[String]],
               map.asInstanceOf[PyStringNode],
               this.varName)
         },
-        new ListCompVocabMaker(Types.PyString, Types.PyInt) {
+        new ListCompVocabMaker(Types.PyString, Types.PyInt, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[StringToIntListCompNode]
           override def makeNode(lst: ASTNode, map: ASTNode): ASTNode =
             new StringToIntListCompNode(
               lst.asInstanceOf[ListNode[String]],
               map.asInstanceOf[PyIntNode],
               this.varName)
         },
-        new ListCompVocabMaker(Types.PyInt, Types.PyString) {
+        new ListCompVocabMaker(Types.PyInt, Types.PyString, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[IntToStringListCompNode]
           override def makeNode(lst: ASTNode, map: ASTNode): ASTNode =
             new IntToStringListCompNode(
               lst.asInstanceOf[ListNode[Int]],
               map.asInstanceOf[PyStringNode],
               this.varName)
         },
-        new ListCompVocabMaker(Types.PyInt, Types.PyInt) {
+        new ListCompVocabMaker(Types.PyInt, Types.PyInt, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[IntToIntListCompNode]
           override def makeNode(lst: ASTNode, map: ASTNode): ASTNode =
             new IntToIntListCompNode(
               lst.asInstanceOf[ListNode[Int]],
               map.asInstanceOf[PyIntNode],
               this.varName)
         },
-        new ListCompVocabMaker(Types.PyInt, Types.PyInt) {
+        new ListCompVocabMaker(Types.PyInt, Types.PyInt, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[IntToIntListCompNode]
           override def makeNode(lst: ASTNode, map: ASTNode): ASTNode =
             new IntToIntListCompNode(
               lst.asInstanceOf[ListNode[Int]],
               map.asInstanceOf[PyIntNode],
               this.varName)
         },
-        new MapCompVocabMaker(Types.PyString, Types.PyString) {
+        new MapCompVocabMaker(Types.PyString, Types.PyString, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[StringStringMapCompNode]
           override def makeNode(lst: ASTNode, key: ASTNode, value: ASTNode): ASTNode =
             new StringStringMapCompNode(lst.asInstanceOf[PyStringNode], key.asInstanceOf[PyStringNode], value.asInstanceOf[PyStringNode], this.varName)
         },
-        new MapCompVocabMaker(Types.PyString, Types.PyInt) {
+        new MapCompVocabMaker(Types.PyString, Types.PyInt, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[StringIntMapCompNode]
           override def makeNode(lst: ASTNode, key: ASTNode, value: ASTNode): ASTNode =
             new StringIntMapCompNode(lst.asInstanceOf[PyStringNode], key.asInstanceOf[PyStringNode], value.asInstanceOf[PyIntNode], this.varName)
         },
-        new FilteredMapVocabMaker(Types.PyString, Types.PyString) {
+        new FilteredMapVocabMaker(Types.PyString, Types.PyString, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[StringStringFilteredMapNode]
           override def makeNode(map: ASTNode, filter: PyBoolNode) : ASTNode =
             new StringStringFilteredMapNode(map.asInstanceOf[StringStringMapNode], filter, this.keyName)
         },
-        new FilteredMapVocabMaker(Types.PyString, Types.PyInt) {
+        new FilteredMapVocabMaker(Types.PyString, Types.PyInt, size) {
+          override val nodeType: Class[_ <: ASTNode] = classOf[StringIntFilteredMapNode]
           override def makeNode(map: ASTNode, filter: PyBoolNode) : ASTNode =
             new StringIntFilteredMapNode(map.asInstanceOf[MapNode[String,Int]], filter, this.keyName)
         },

@@ -2,7 +2,11 @@ package vocab
 
 import ast.Types.Types
 import ast._
-import enumeration.{ChildrenIterator, ProbUpdate}
+import enumeration.{ChildrenIterator, ProbChildrenIterator, ProbUpdate}
+import sygus.{PySynthesisTask, SygusFileTask}
+
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 trait PyBasicVocabMaker extends PyVocabMaker with Iterator[ASTNode] {
   val returnType: Types
@@ -13,7 +17,7 @@ trait PyBasicVocabMaker extends PyVocabMaker with Iterator[ASTNode] {
   var childIterator: Iterator[List[ASTNode]] = _
   var contexts: List[Map[String, Any]] = _
 
-  def rootCost: Int = if (nodeType == classOf[PyIntLiteral] || nodeType == classOf[PyStringLiteral] || nodeType == classOf[PyBoolLiteral]
+  override def rootCost: Int = if (nodeType == classOf[PyIntLiteral] || nodeType == classOf[PyStringLiteral] || nodeType == classOf[PyBoolLiteral]
     || nodeType == classOf[PyStringVariable] || nodeType == classOf[PyBoolVariable] || nodeType == classOf[PyIntVariable])
 
     ProbUpdate.priors(nodeType, None) else ProbUpdate.priors(nodeType, None)
@@ -33,6 +37,23 @@ trait PyBasicVocabMaker extends PyVocabMaker with Iterator[ASTNode] {
       Iterator.empty
     } else {
       new ChildrenIterator(progs, childTypes, height)
+    }
+    this
+  }
+
+  override def probe_init(progs: List[ASTNode],
+                 vocabFactory: PyVocabFactory, costLevel: Int, contexts: List[Map[String,Any]], bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
+
+    this.contexts = contexts
+
+    this.childIterator = if (this.arity == 0 && this.rootCost == costLevel) {
+      // No children needed, but we still return 1 value
+      Iterator.single(Nil)
+    } else if (this.rootCost < costLevel) {
+      val childrenCost = costLevel - this.rootCost
+      new ProbChildrenIterator(this.childTypes, childrenCost, bank)
+    } else {
+      Iterator.empty
     }
     this
   }

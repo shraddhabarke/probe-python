@@ -1,7 +1,10 @@
 package vocab
 
-import ast.{ASTNode}
-import enumeration.{ChildrenIterator}
+import ast.ASTNode
+import enumeration.{ChildrenIterator, ProbChildrenIterator}
+import sygus.SygusFileTask
+
+import scala.collection.mutable
 
 trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
 
@@ -27,4 +30,20 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
     this
   }
 
+   def probe_init(bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
+                  vocabFactory: VocabFactory, costLevel: Int, task: SygusFileTask) : Iterator[ASTNode] = {
+
+    this.contexts = task.examples.map(_.input)
+
+    this.childIterator = if (this.arity == 0 && this.rootCost == costLevel) {
+      // No children needed, but we still return 1 value
+      Iterator.single(Nil)
+    } else if (this.rootCost < costLevel) {
+      val childrenCost = costLevel - this.rootCost
+      new ProbChildrenIterator(this.childTypes, childrenCost, bank)
+    } else {
+      Iterator.empty
+    }
+    this
+  }
 }

@@ -2,7 +2,7 @@ package enumeration
 
 import ast._
 import sygus.SygusFileTask
-import vocab.VocabFactory
+import vocab.{PyVocabFactory, VocabFactory}
 
 import scala.collection.mutable
 
@@ -81,6 +81,19 @@ object ProbUpdate {
   def createProbMap(vocab: VocabFactory): mutable.Map[(Class[_], Option[Any]), Double] = {
     val uniform = 1.0 / (vocab.leavesMakers.length + vocab.nonLeaves().length)
     vocab.leavesMakers.foreach(l => probMap += ((l.nodeType, Some(l.head)) -> uniform))
+    vocab.nonLeaves().foreach(l => probMap += ((l.nodeType, None) -> uniform))
+    probMap
+  }
+
+  def createPyPrior(vocab: PyVocabFactory): mutable.Map[(Class[_], Option[Any]), Int] = {
+    vocab.leavesMakers.foreach(l => priors += ((l.nodeType, None) -> roundValue(-log2(probMap((l.nodeType, None))))))
+    vocab.nonLeaves().foreach(l => priors += ((l.nodeType, None) -> roundValue(-log2(probMap((l.nodeType, None))))))
+    priors
+  }
+
+  def createPyProbMap(vocab: PyVocabFactory): mutable.Map[(Class[_], Option[Any]), Double] = {
+    val uniform = 1.0 / (vocab.leavesMakers.length + vocab.nonLeaves().length)
+    vocab.leavesMakers.foreach(l => probMap += ((l.nodeType, None) -> uniform))
     vocab.nonLeaves().foreach(l => probMap += ((l.nodeType, None) -> uniform))
     probMap
   }

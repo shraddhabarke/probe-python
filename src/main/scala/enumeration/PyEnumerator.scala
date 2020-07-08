@@ -1,7 +1,8 @@
 package enumeration
 
+import java.io.FileOutputStream
+
 import ast.ASTNode
-import trace.DebugPrints.dprintln
 import vocab.{PyVocabFactory, PyVocabMaker}
 
 import scala.collection.mutable
@@ -87,7 +88,7 @@ class PyEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager, va
       }
     }
     currLevelProgs += res.get
-    //println(currLevelProgs.takeRight(1).map(c => (c.code)))
+    //Console.withOut(fos) { println(currLevelProgs.takeRight(1).map(c => (c.code, c.height))) }
     res
   }
 }

@@ -17,7 +17,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
         |      "l": "[1,2,3,1]"
         |    }
         |  ]
-        |}""".stripMargin)
+        |}""".stripMargin, false)
     assertEquals(Types.IntList, task.returnType)
 
     val task2 = PythonPBETask.fromString(
@@ -31,7 +31,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
         |      "l": "['a','b','3','1']"
         |    }
         |  ]
-        |}""".stripMargin)
+        |}""".stripMargin, false)
     assertEquals(Types.StringList, task2.returnType)
   }
 
@@ -49,7 +49,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
                                           |    }
                                           |
                                           |  ]
-                                          |}""".stripMargin)
+                                          |}""".stripMargin, false)
     assertEquals(Types.Unknown,task.returnType)
   }
 
@@ -67,7 +67,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
                                           |    }
                                           |
                                           |  ]
-                                          |}""".stripMargin)
+                                          |}""".stripMargin, false)
     assertTrue(task.returnType.isInstanceOf[Types.Map])
     assertEquals(Types.PyString,task.returnType.asInstanceOf[Types.Map].keyType)
     assertEquals(Types.PyInt,task.returnType.asInstanceOf[Types.Map].valType)
@@ -82,7 +82,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
         |      "l": "[]"
         |    }
         |  ]
-        |}""".stripMargin)
+        |}""".stripMargin, false)
     assertEquals(Types.StringList, task.returnType)
   }
 
@@ -95,7 +95,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
                                           |      "filters": "{}",
                                           |    }
                                           |  ]
-                                          |}""".stripMargin)
+                                          |}""".stripMargin, false)
     assertTrue(task.returnType.isInstanceOf[Types.Map])
     assertEquals(Types.PyString,task.returnType.asInstanceOf[Types.Map].keyType)
     assertEquals(Types.PyInt,task.returnType.asInstanceOf[Types.Map].valType)
@@ -115,7 +115,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
                                           |    }
                                           |
                                           |  ]
-                                          |}""".stripMargin)
+                                          |}""".stripMargin, false)
     val varType = task.parameters.find(kv => kv._1 ==  "counts").get._2.asInstanceOf[Types.Map]
     assertEquals(Types.PyString,varType.keyType)
     assertEquals(Types.PyInt,varType.valType)
@@ -135,7 +135,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
                                           |    }
                                           |
                                           |  ]
-                                          |}""".stripMargin)
+                                          |}""".stripMargin, false)
     assertEquals(Types.IntList, task.parameters.find(kv => kv._1 ==  "counts").get._2)
   }
 
@@ -153,7 +153,7 @@ class PySynthesisTaskTests  extends JUnitSuite{
                                           |    }
                                           |
                                           |  ]
-                                          |}""".stripMargin)
+                                          |}""".stripMargin, false)
     assertEquals(Types.StringList, task.parameters.find(kv => kv._1 ==  "counts").get._2)
   }
 }

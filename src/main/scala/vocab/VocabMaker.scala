@@ -3,6 +3,9 @@ package vocab
 import ast.{ASTNode, BVLiteral, BVVariable, BoolLiteral, BoolVariable, IntLiteral, IntVariable, StringLiteral, StringVariable}
 import ast.Types.Types
 import enumeration.ProbUpdate
+import sygus.SygusFileTask
+
+import scala.collection.mutable
 
 class VocabFactory(val leavesMakers: List[VocabMaker], val nodeMakers: List[VocabMaker]) {
   def leaves(): Iterator[VocabMaker] = leavesMakers.iterator
@@ -31,5 +34,7 @@ trait VocabMaker {
 
     ProbUpdate.priors(nodeType, Some(head)) else ProbUpdate.priors(nodeType, None)
   def init(progs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: VocabFactory, height: Int) : Iterator[ASTNode]
+  def probe_init(bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
+                 vocabFactory: VocabFactory, costLevel: Int, task: SygusFileTask) : Iterator[ASTNode]
 }
 
