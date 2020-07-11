@@ -94,7 +94,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] =
   {
     this.listIter = progs.filter(n => n.nodeType.equals(this.iterableType)).iterator
-    this.costLevel = costLevel
+    this.costLevel = costLevel - 1
     this.varName = "var"
     this.contexts = contexts
 
@@ -192,7 +192,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
       if (!this.enumerator.hasNext) return
 
       val value = this.enumerator.next()
-      if (value.cost > this.costLevel) {
+      if (value.cost > this.costLevel - this.currList.cost) {
         // We are out of map functions to synthesize for this list.
         if (!this.nextList())
         // We are also out of lists!
@@ -310,7 +310,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
     this.mapIter = progs.filter(n => n.isInstanceOf[VariableNode[_]] && n.nodeType.equals(Types.Map(keyType, valueType))).iterator
     this.keyName = "key"
     this.contexts = contexts
-    this.costLevel = costLevel
+    this.costLevel = costLevel - 1
     // Make sure the name is unique
     // TODO We need a nicer way to generate this
     while (contexts.head.contains(this.keyName)) this.keyName = "_" + this.keyName
@@ -372,7 +372,6 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
       if (!this.enumerator.hasNext) return
 
       val filter = this.enumerator.next()
-
       if (filter.height > this.childHeight + 1) {
         // We are out of map functions to synthesize for this list.
         if (!this.nextMap())
@@ -395,7 +394,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
 
       val filter = this.enumerator.next()
 
-      if (filter.cost > this.costLevel) {
+      if (filter.cost > this.costLevel - this.currMap.cost) {
         // We are out of map functions to synthesize for this list.
         if (!this.nextMap())
         // We are also out of lists!

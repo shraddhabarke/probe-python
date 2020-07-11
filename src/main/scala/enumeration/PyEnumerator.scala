@@ -16,6 +16,9 @@ class PyEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager, va
   var prevLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
   var currLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
   var height = 0
+  var fos = new FileOutputStream("output.txt", true)
+  ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)
+  ProbUpdate.priors = ProbUpdate.createPyPrior(vocab)
   var rootMaker: Iterator[ASTNode] =
     currIter.next().init(currLevelProgs.toList, contexts, vocab, height)
 
@@ -88,7 +91,7 @@ class PyEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager, va
       }
     }
     currLevelProgs += res.get
-    //Console.withOut(fos) { println(currLevelProgs.takeRight(1).map(c => (c.code, c.height))) }
+    Console.withOut(fos) { println(currLevelProgs.takeRight(1).map(c => (c.code, c.height))) }
     res
   }
 }

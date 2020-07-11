@@ -15,8 +15,14 @@ object Main extends App {
   //"src/test/benchmarks/euphony/extract-word-that-begins-with-specific-character.sl"
   //"src/test/benchmarks/too-hard/43606446.sl"
   //"src/test/benchmarks/euphony-test/11604909.sl"
-  "src/test/resources/old_benchmarks/count_characters.examples.json"
+  "src/test/resources/old_benchmarks/rotate.examples.json"
+  //"src/test/resources/benchmarks/abbreviate_2_ex.examples.json"
+  //"src/test/resources/old_benchmarks/filter_map.examples.json"
+  //"src/test/resources/old_benchmarks/get_middle.examples.json"
+  //"src/test/resources/benchmarks/abbreviate_1_ex.examples.json"
   //"src/test/resources/old_benchmarks/string_length.examples.json"
+  //"src/test/resources/old_benchmarks/vowel_count.examples.json"
+
 
   case class ExpectedEOFException() extends Exception
 
@@ -80,7 +86,7 @@ object Main extends App {
     p
   }
 
-  def synthesizePython(task: PySynthesisTask, sizeBased: Boolean, timeout: Int = 7000) : Option[(String, Int)] =
+  def synthesizePython(task: PySynthesisTask, sizeBased: Boolean, timeout: Int = 20) : Option[(String, Int)] =
   {
     var rs: Option[(String, Int)] = None
     val oeManager = new InputsValuesManager()
@@ -106,7 +112,7 @@ object Main extends App {
               rs = Some(
                 (task.asInstanceOf[sygus.PythonPBETask].outputVar + " = " + PostProcessor.clean(program).code,
                   timeout * 1000 - deadline.timeLeft.toMillis.toInt))
-              println(rs.get._1, program.cost)
+              println(rs.get._1, program.cost, program.height)
               break
             }
             else {

@@ -78,7 +78,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
   override def probe_init(progs: List[ASTNode], vocabFactory: PyVocabFactory, costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
 
-    this.costLevel = costLevel
+    this.costLevel = costLevel - 1
     this.listIter = progs.filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
     this.varName = "var"
     this.contexts = contexts
@@ -165,7 +165,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
       if (!this.enumerator.hasNext) return
 
       val next = this.enumerator.next()
-      if (next.cost > this.costLevel) {
+      if (next.cost > this.costLevel - this.currList.cost) {
         // We are out of map functions to synthesize for this list.
         if (!this.nextList())
         // We are also out of lists!

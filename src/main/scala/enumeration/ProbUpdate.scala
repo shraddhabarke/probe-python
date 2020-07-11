@@ -86,8 +86,10 @@ object ProbUpdate {
   }
 
   def createPyPrior(vocab: PyVocabFactory): mutable.Map[(Class[_], Option[Any]), Int] = {
-    vocab.leavesMakers.foreach(l => priors += ((l.nodeType, None) -> roundValue(-log2(probMap((l.nodeType, None))))))
-    vocab.nonLeaves().foreach(l => priors += ((l.nodeType, None) -> roundValue(-log2(probMap((l.nodeType, None))))))
+    vocab.leavesMakers.foreach(l => priors += ((l.nodeType, None) -> 1))
+    vocab.nonLeaves().foreach(l => priors += ((l.nodeType, None) -> 1))
+    //vocab.leavesMakers.foreach(l => priors += ((l.nodeType, None) -> roundValue(-log2(probMap((l.nodeType, None))))))
+    //vocab.nonLeaves().foreach(l => priors += ((l.nodeType, None) -> roundValue(-log2(probMap((l.nodeType, None))))))
     priors
   }
 

@@ -36,8 +36,8 @@ class PyProbEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager
   var fos = new FileOutputStream("output-size.txt", true)
   ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)
   ProbUpdate.priors = ProbUpdate.createPyPrior(vocab)
-  var costLevel = 0
 
+  var costLevel = 0
   resetEnumeration()
   var rootMaker: Iterator[ASTNode] = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
 
@@ -73,10 +73,10 @@ class PyProbEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager
   }
 
   def changeLevel(): Boolean = {
-    currIter = if (!bank.isEmpty) vocab.nonLeaves.toList.sortBy(_.rootCost).toIterator else
-      vocab.leaves().toList.sortBy(_.rootCost).toIterator
-
     for (p <- currLevelProgs) updateBank(p)
+
+    currIter = if (!bank.isEmpty) vocab.nonLeaves.toList.sortBy(_.rootCost).toIterator else
+                vocab.leaves().toList.sortBy(_.rootCost).toIterator
     costLevel += 1
     currLevelProgs.clear()
     advanceRoot()
