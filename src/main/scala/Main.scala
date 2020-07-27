@@ -112,7 +112,7 @@ object Main extends App {
               rs = Some(
                 (task.asInstanceOf[sygus.PythonPBETask].outputVar + " = " + PostProcessor.clean(program).code,
                   timeout * 1000 - deadline.timeLeft.toMillis.toInt))
-              println(rs.get._1, program.cost, program.height)
+              println(rs.get._1)
               break
             }
             else {
@@ -138,7 +138,7 @@ object Main extends App {
     synthesizeSyGus(filename, task, sizeBased, probBased)
   }
 
-  def pySynthesize(filename: String, sizeBased: Boolean = true) : Option[(String, Int)] =
+  def pySynthesize(filename: String, sizeBased: Boolean = false) : Option[(String, Int)] =
   {
     val task: PySynthesisTask = PythonPBETask.fromString(fromFile(filename).mkString, sizeBased)
     synthesizePython(task, sizeBased)
