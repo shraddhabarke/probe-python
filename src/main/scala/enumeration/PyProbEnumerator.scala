@@ -3,12 +3,13 @@ package enumeration
 import java.io.FileOutputStream
 
 import ast.ASTNode
-import vocab.{PyVocabFactory, PyVocabMaker}
+import trace.DebugPrints.iprintln
+import vocab.{VocabFactory, VocabMaker}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class PyProbEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager, val contexts: List[Map[String,Any]], val probBased: Boolean) extends Iterator[ASTNode] {
+class PyProbEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val contexts: List[Map[String,Any]], val probBased: Boolean) extends Iterator[ASTNode] {
   override def toString(): String = "enumeration.Enumerator"
 
   var nextProgram: Option[ASTNode] = None
@@ -30,10 +31,10 @@ class PyProbEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager
     res
   }
 
-  var currIter: Iterator[PyVocabMaker] = null
+  var currIter: Iterator[VocabMaker] = null
   var currLevelProgs: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
   var bank = mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]()
-  var fos = new FileOutputStream("output-size.txt", true)
+  var size_log = new FileOutputStream("output-size.txt", true)
   ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)
   ProbUpdate.priors = ProbUpdate.createPyPrior(vocab)
 
@@ -73,10 +74,12 @@ class PyProbEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager
   }
 
   def changeLevel(): Boolean = {
-    for (p <- currLevelProgs) updateBank(p)
+    val sortedLeaves = vocab.leaves().toList.sortBy(_.rootCost)
+    currIter = if (sortedLeaves.last.rootCost <= costLevel)
+      vocab.nonLeaves.toList.sortBy(_.rootCost).toIterator else
+      sortedLeaves.toIterator
 
-    currIter = if (!bank.isEmpty) vocab.nonLeaves.toList.sortBy(_.rootCost).toIterator else
-                vocab.leaves().toList.sortBy(_.rootCost).toIterator
+    for (p <- currLevelProgs) updateBank(p)
     costLevel += 1
     currLevelProgs.clear()
     advanceRoot()
@@ -104,7 +107,7 @@ class PyProbEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager
       }
     }
     currLevelProgs += res.get
-    Console.withOut(fos) { (println(currLevelProgs.takeRight(1).map(c => (c.code, c.cost)))) }
+    Console.withOut(size_log) { iprintln(currLevelProgs.takeRight(1).map(c => (c.code, c.cost))) }
     res
   }
 }

@@ -2,14 +2,14 @@ package enumeration
 
 import java.io.FileOutputStream
 
-import ast.ASTNode
+import ast.{ASTNode}
+import vocab.{VocabMaker, VocabFactory }
 import sygus.SygusFileTask
-import vocab.{VocabFactory, VocabMaker}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManager: OEValuesManager, val task: SygusFileTask, val probBased: Boolean) extends Iterator[ASTNode] {
+class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManager: OEValuesManager, val task: SygusFileTask, val contexts: List[Map[String,Any]], val probBased: Boolean) extends Iterator[ASTNode] {
   override def toString(): String = "enumeration.Enumerator"
 
   var nextProgram: Option[ASTNode] = None
@@ -35,6 +35,7 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
   var childrenIterator: Iterator[List[ASTNode]] = null
   var currLevelProgs: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
   var bank = mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]()
+  var fos = new FileOutputStream("output-size.txt", true)
   var phaseCounter: Int = 0
   var fitsMap = mutable.Map[(Class[_], Option[Any]), Double]()
   ProbUpdate.probMap = ProbUpdate.createProbMap(task.vocab)
@@ -43,11 +44,12 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
   var costLevel = 0
 
   resetEnumeration()
-  var rootMaker: Iterator[ASTNode] = currIter.next().probe_init(bank, vocab, costLevel, task)
+  var rootMaker: Iterator[ASTNode] = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
 
-  def resetEnumeration(): Unit = {
+  def resetEnumeration():  Unit = {
     currIter = vocab.leaves().toList.sortBy(_.rootCost).toIterator
-    rootMaker = currIter.next().probe_init(bank, vocab, costLevel, task)
+    rootMaker = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
+    childrenIterator = Iterator.single(Nil)
     currLevelProgs.clear()
     oeManager.clear()
     bank.clear()
@@ -55,18 +57,12 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
     phaseCounter = 0
   }
 
-  /**
-   * This method moves the rootMaker to the next possible non-leaf. Note that this does not
-   * change the level/height of generated programs.
-   *
-   * @return False if we have exhausted all non-leaf AST nodes.
-   */
   def advanceRoot(): Boolean = {
     rootMaker = null
     while (rootMaker == null || !rootMaker.hasNext) {
       if (!currIter.hasNext) return false
       val next = currIter.next()
-      rootMaker = next.probe_init(bank, vocab, costLevel, task)
+      rootMaker = next.probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
     }
     true
   }
@@ -79,13 +75,10 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
   }
 
   def changeLevel(): Boolean = {
-    if (currLevelProgs.isEmpty) {
-      currIter = vocab.leaves().toList.sortBy(_.rootCost).toIterator
-      advanceRoot()
-    }
-
-    currIter = if (!bank.isEmpty) vocab.nonLeaves.toList.sortBy(_.rootCost).toIterator else
-      vocab.leaves().toList.sortBy(_.rootCost).toIterator
+    val sortedLeaves = vocab.leaves().toList.sortBy(_.rootCost)
+    currIter = if (sortedLeaves.last.rootCost <= costLevel)
+      vocab.nonLeaves.toList.sortBy(_.rootCost).toIterator else
+      sortedLeaves.toIterator
 
     for (p <- currLevelProgs) updateBank(p)
 
@@ -106,15 +99,13 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
     advanceRoot()
   }
 
-
   def getNextProgram(): Option[ASTNode] = {
     var res: Option[ASTNode] = None
-    // Iterate while no non-equivalent program is found
     while (res.isEmpty) {
       if (rootMaker.hasNext) {
         val prog = rootMaker.next
 
-        if (prog.values.nonEmpty && oeManager.isRepresentative(prog)) {
+        if (oeManager.isRepresentative(prog)) {
           res = Some(prog)
         }
       }
@@ -128,7 +119,7 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
       }
     }
     currLevelProgs += res.get
-    //println(currLevelProgs.takeRight(1).map(c => (c.code, c.cost)).mkString(","))
+    //Console.withOut(fos) { println(currLevelProgs.takeRight(1).map(c => (c.code, c.cost)).mkString(",")) }
     res
   }
 }

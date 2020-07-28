@@ -3,21 +3,23 @@ package enumeration
 import java.io.FileOutputStream
 
 import ast.ASTNode
-import vocab.{PyVocabFactory, PyVocabMaker}
+import vocab.{VocabFactory, VocabMaker}
+import trace.DebugPrints.{dprintln, iprintln}
 
 import scala.collection.mutable
 
-class PyEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager, val contexts: List[Map[String,Any]]) extends Iterator[ASTNode]{
+class PyEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val contexts: List[Map[String,Any]]) extends Iterator[ASTNode]{
   override def toString(): String = "enumeration.Enumerator"
 
   var nextProgram: Option[ASTNode] = None
 
-  var currIter: Iterator[PyVocabMaker] = vocab.leaves
+  var currIter: Iterator[VocabMaker] = vocab.leaves
   var prevLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
   var currLevelProgs: mutable.ListBuffer[ASTNode] = mutable.ListBuffer()
   var height = 0
   var rootMaker: Iterator[ASTNode] =
     currIter.next().init(currLevelProgs.toList, contexts, vocab, height)
+  var height_log = new FileOutputStream("output-height.txt", true)
 
   override def hasNext: Boolean = if (nextProgram.isDefined) true
   else {
@@ -88,6 +90,7 @@ class PyEnumerator(val vocab: PyVocabFactory, val oeManager: OEValuesManager, va
       }
     }
     currLevelProgs += res.get
+    Console.withOut(height_log) { iprintln(currLevelProgs.takeRight(1).map(c => (c.code, c.height))) }
     res
   }
 }

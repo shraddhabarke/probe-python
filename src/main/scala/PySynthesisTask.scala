@@ -6,12 +6,11 @@ import net.liftweb.json.JsonAST.{JArray, JObject}
 import net.liftweb.json.JsonParser
 import vocab._
 
-
 trait PySynthesisTask
 {
   val returnType: ast.Types.Value
   val parameters: List[(String, ast.Types.Value)]
-  val vocab: PyVocabFactory
+  val vocab: VocabFactory
   val examples: List[Example]
 
   def fit(program: ASTNode): (Int, Int)
@@ -39,7 +38,7 @@ object PythonExample
 class PythonPBETask(
                      val returnType: ast.Types.Value,
                      val parameters: List[(String, ast.Types.Value)],
-                     val vocab: PyVocabFactory,
+                     val vocab: VocabFactory,
                      val examples: List[Example],
                      val outputVar: String) extends PySynthesisTask
 {
@@ -136,19 +135,20 @@ object PythonPBETask
     intersection.toList
   }
 
-  private def vocabFactory(variables: List[(String, Types.Value)], additionalLiterals: List[String], size: Boolean): PyVocabFactory =
+  private def vocabFactory(variables: List[(String, Types.Value)], additionalLiterals: List[String], size: Boolean): VocabFactory =
   {
     val defaultStringLiterals = List(" ")
     val stringLiterals = (defaultStringLiterals ++ additionalLiterals).distinct
 
-    val vocab: List[PyVocabMaker] =
+    val vocab: List[VocabMaker] =
       stringLiterals.map{str =>
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 0
           override val childTypes: List[Types] = Nil
           override val returnType: Types = Types.PyString
           override val nodeType: Class[_ <: ASTNode] = classOf[PyStringLiteral]
+          override val head: String = ""
 
           override def apply(children : List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyStringLiteral(str, contexts.length)
@@ -156,183 +156,201 @@ object PythonPBETask
         }
       } ++ List(
         // Literals
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 0
           override val childTypes: List[Types] = Nil
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIntLiteral]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntLiteral(0, contexts.length)
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 0
           override val childTypes: List[Types] = Nil
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIntLiteral]
+          override val head: String = ""
 
           override def apply(children : List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntLiteral(1, contexts.length)
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 0
           override val childTypes: List[Types] = Nil
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIntLiteral]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntLiteral(-1, contexts.length)
         },
         // Binary Ops
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyInt, Types.PyInt)
           override val returnType: Types = Types.PyBool
           override val nodeType: Class[_ <: ASTNode] = classOf[PyGreaterThan]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyGreaterThan(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyInt, Types.PyInt)
           override val returnType: Types = Types.PyBool
           override val nodeType: Class[_ <: ASTNode] = classOf[PyLessThanEq]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyLessThanEq(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyString, Types.PyString)
           override val returnType: Types = Types.PyString
           override val nodeType: Class[_ <: ASTNode] = classOf[PyStringConcat]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyStringConcat(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyStringNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyString, Types.PyInt)
           override val returnType: Types = Types.PyString
           override val nodeType: Class[_ <: ASTNode] = classOf[PyBinarySubstring]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyBinarySubstring(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyIntNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyString, Types.PyInt)
           override val returnType: Types = Types.PyString
           override val nodeType: Class[_ <: ASTNode] = classOf[PyStringStep]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyStringStep(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyIntNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyString, Types.PyString)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyFind]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyFind(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyStringNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyString, Types.PyString)
           override val returnType: Types = Types.PyBool
           override val nodeType: Class[_ <: ASTNode] = classOf[PyContains]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyContains(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyStringNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyString, Types.PyString)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyCount]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyCount(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyStringNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.Iterable(Types.Any))
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyLength]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyLength(children.head.asInstanceOf[IterableNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.IntList)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyMin]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyMin(children.head.asInstanceOf[ListNode[Int]])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.IntList)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyMax]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyMax(children.head.asInstanceOf[ListNode[Int]])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.PyString)
           override val returnType: Types = Types.PyString
           override val nodeType: Class[_ <: ASTNode] = classOf[PyStringLower]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyStringLower(children.head.asInstanceOf[PyStringNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.PyString)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyStringToInt]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyStringToInt(children.head.asInstanceOf[PyStringNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.PyInt)
           override val returnType: Types = Types.PyString
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIntToString]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntToString(children.head.asInstanceOf[PyIntNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 3
           override val childTypes: List[Types] = List(Types.PyString, Types.PyInt, Types.PyInt)
           override val returnType: Types = Types.PyString
           override val nodeType: Class[_ <: ASTNode] = classOf[TernarySubstring]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new TernarySubstring(
@@ -341,32 +359,35 @@ object PythonPBETask
               children(2).asInstanceOf[PyIntNode])
         },
 
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyString, Types.PyString)
           override val returnType: Types = Types.StringList
           override val nodeType: Class[_ <: ASTNode] = classOf[PyStringSplit]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyStringSplit(children.head.asInstanceOf[PyStringNode], children.tail.head.asInstanceOf[PyStringNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyString, Types.StringList)
           override val returnType: Types = Types.PyString
           override val nodeType: Class[_ <: ASTNode] = classOf[PyStringJoin]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyStringJoin(children.head.asInstanceOf[PyStringNode], children.tail.head.asInstanceOf[ListNode[String]])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.StringList)
           override val returnType: Types = Types.StringList
           override val nodeType: Class[_ <: ASTNode] = classOf[PySortedStringList]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PySortedStringList(children.head.asInstanceOf[ListNode[String]])
@@ -378,6 +399,10 @@ object PythonPBETask
               lst.asInstanceOf[ListNode[String]],
               map.asInstanceOf[PyStringNode],
               this.varName)
+
+          override val returnType: Types = Types.StringList
+          override val childTypes: List[Types] = List(Types.PyString)
+          override val head: String = ""
         },
         new ListCompVocabMaker(Types.PyString, Types.PyInt, size) {
           override val nodeType: Class[_ <: ASTNode] = classOf[StringToIntListCompNode]
@@ -386,6 +411,10 @@ object PythonPBETask
               lst.asInstanceOf[ListNode[String]],
               map.asInstanceOf[PyIntNode],
               this.varName)
+
+          override val returnType: Types = Types.IntList
+          override val childTypes: List[Types] = List(Types.PyString)
+          override val head: String = ""
         },
         new ListCompVocabMaker(Types.PyInt, Types.PyString, size) {
           override val nodeType: Class[_ <: ASTNode] = classOf[IntToStringListCompNode]
@@ -394,6 +423,10 @@ object PythonPBETask
               lst.asInstanceOf[ListNode[Int]],
               map.asInstanceOf[PyStringNode],
               this.varName)
+
+          override val returnType: Types = Types.StringList
+          override val childTypes: List[Types] = List(Types.PyInt)
+          override val head: String = ""
         },
         new ListCompVocabMaker(Types.PyInt, Types.PyInt, size) {
           override val nodeType: Class[_ <: ASTNode] = classOf[IntToIntListCompNode]
@@ -402,124 +435,145 @@ object PythonPBETask
               lst.asInstanceOf[ListNode[Int]],
               map.asInstanceOf[PyIntNode],
               this.varName)
-        },
-        new ListCompVocabMaker(Types.PyInt, Types.PyInt, size) {
-          override val nodeType: Class[_ <: ASTNode] = classOf[IntToIntListCompNode]
-          override def makeNode(lst: ASTNode, map: ASTNode): ASTNode =
-            new IntToIntListCompNode(
-              lst.asInstanceOf[ListNode[Int]],
-              map.asInstanceOf[PyIntNode],
-              this.varName)
+
+          override val returnType: Types = Types.IntList
+          override val childTypes: List[Types] = List(Types.PyInt)
+          override val head: String = ""
         },
         new MapCompVocabMaker(Types.PyString, Types.PyString, size) {
           override val nodeType: Class[_ <: ASTNode] = classOf[StringStringMapCompNode]
           override def makeNode(lst: ASTNode, key: ASTNode, value: ASTNode): ASTNode =
             new StringStringMapCompNode(lst.asInstanceOf[PyStringNode], key.asInstanceOf[PyStringNode], value.asInstanceOf[PyStringNode], this.varName)
+
+          override val returnType: Types = Types.Unknown
+          override val childTypes: List[Types] = List(Types.Unknown)
+          override val head: String = ""
         },
         new MapCompVocabMaker(Types.PyString, Types.PyInt, size) {
           override val nodeType: Class[_ <: ASTNode] = classOf[StringIntMapCompNode]
           override def makeNode(lst: ASTNode, key: ASTNode, value: ASTNode): ASTNode =
             new StringIntMapCompNode(lst.asInstanceOf[PyStringNode], key.asInstanceOf[PyStringNode], value.asInstanceOf[PyIntNode], this.varName)
+
+          override val returnType: Types = Types.Unknown
+          override val childTypes: List[Types] = List(Types.Unknown)
+          override val head: String = ""
         },
         new FilteredMapVocabMaker(Types.PyString, Types.PyString, size) {
           override val nodeType: Class[_ <: ASTNode] = classOf[StringStringFilteredMapNode]
           override def makeNode(map: ASTNode, filter: PyBoolNode) : ASTNode =
             new StringStringFilteredMapNode(map.asInstanceOf[StringStringMapNode], filter, this.keyName)
+
+          override val returnType: Types = Types.Unknown
+          override val childTypes: List[Types] = List(Types.Unknown)
+          override val head: String = ""
         },
         new FilteredMapVocabMaker(Types.PyString, Types.PyInt, size) {
           override val nodeType: Class[_ <: ASTNode] = classOf[StringIntFilteredMapNode]
           override def makeNode(map: ASTNode, filter: PyBoolNode) : ASTNode =
             new StringIntFilteredMapNode(map.asInstanceOf[MapNode[String,Int]], filter, this.keyName)
+          override val returnType: Types = Types.StringList
+          override val childTypes: List[Types] = List(Types.Unknown)
+          override val head: String = ""
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.Map(Types.PyString, Types.PyInt), Types.PyString)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyMapGet]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyMapGet(children.head.asInstanceOf[MapNode[String,Int]], children(1).asInstanceOf[PyStringNode])
+
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyInt, Types.PyInt)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIntAddition]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntAddition(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyInt, Types.PyInt)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIntSubtraction]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntSubtraction(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
         },
-        new PyBasicVocabMaker
+        new BasicVocabMaker
         {
           override val arity: Int = 2
           override val childTypes: List[Types] = List(Types.PyInt, Types.PyInt)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIntDivision]
+          override val head: String = ""
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntDivision(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
         }
       )
 
-    PyVocabFactory(vocab.appendedAll(
+    VocabFactory(vocab.appendedAll(
       variables.
         map {
-          case (name, Types.PyString) => new PyBasicVocabMaker
+          case (name, Types.PyString) => new BasicVocabMaker
           {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = Types.PyString
             override val nodeType: Class[_ <: ASTNode] = classOf[PyStringVariable]
+            override val head: String = ""
 
             override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
               new PyStringVariable(name, contexts)
           }
-          case (name, Types.PyInt) => new PyBasicVocabMaker
+          case (name, Types.PyInt) => new BasicVocabMaker
           {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = Types.PyInt
             override val nodeType: Class[_ <: ASTNode] = classOf[PyIntVariable]
+            override val head: String = ""
 
             override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
               new PyIntVariable(name, contexts)
           }
-          case (name, Types.PyBool) => new PyBasicVocabMaker
+          case (name, Types.PyBool) => new BasicVocabMaker
           {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = Types.PyBool
             override val nodeType: Class[_ <: ASTNode] = classOf[PyBoolVariable]
+            override val head: String = ""
 
             override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
               new PyBoolVariable(name, contexts)
           }
-          case (name, Types.List(childType)) => new PyBasicVocabMaker {
+          case (name, Types.List(childType)) => new BasicVocabMaker {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = Types.List(childType)
             override val nodeType: Class[_ <: ASTNode] = classOf[ListVariable[Any]]
+            override val head: String = ""
 
             override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
               new ListVariable(name, contexts, childType)
           }
-          case (name, Types.Map(keyType, valType)) => new PyBasicVocabMaker {
+          case (name, Types.Map(keyType, valType)) => new BasicVocabMaker {
             override val arity: Int = 0
             override val childTypes: List[Types] = Nil
             override val returnType: Types = Types.Map(keyType, valType)
             override val nodeType: Class[_ <: ASTNode] = classOf[MapVariable[Any,Any]]
+            override val head: String = ""
 
             override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
               new MapVariable(name, contexts, keyType, valType)

@@ -12,10 +12,10 @@ import scala.io.Source.fromFile
 
 object Main extends App {
   val filename =
-  //"src/test/benchmarks/euphony/extract-word-that-begins-with-specific-character.sl"
+  "src/test/benchmarks/euphony-test/exceljet3.sl"
   //"src/test/benchmarks/too-hard/43606446.sl"
-  //"src/test/benchmarks/euphony-test/11604909.sl"
-  "src/test/resources/old_benchmarks/rotate.examples.json"
+  //"src/test/benchmarks/euphony-test/36462127.sl"
+  //"src/test/resources/old_benchmarks/rotate.examples.json"
   //"src/test/resources/benchmarks/abbreviate_2_ex.examples.json"
   //"src/test/resources/old_benchmarks/filter_map.examples.json"
   //"src/test/resources/old_benchmarks/get_middle.examples.json"
@@ -56,11 +56,11 @@ object Main extends App {
     }
   }
 
-  def synthesizeSyGus(filename: String, task: SygusFileTask, sizeBased: Boolean, probBased: Boolean, timeout: Int = 600): List[ASTNode] = {
+  def synthesizeSyGus(filename: String, task: SygusFileTask, sizeBased: Boolean, probBased: Boolean, timeout: Int = 100): List[ASTNode] = {
     val oeManager = new InputsValuesManager()
 
     val enumerator =  if (!sizeBased) new enumeration.Enumerator(task.vocab, oeManager, task.examples.map(_.input))
-    else new enumeration.ProbEnumerator(filename, task.vocab, oeManager, task, probBased)
+    else new enumeration.ProbEnumerator(filename, task.vocab, oeManager, task, task.examples.map(_.input), probBased)
     val deadline = timeout.seconds.fromNow
     var p = List[ASTNode]()
     val t0 = System.currentTimeMillis / 1000
@@ -112,7 +112,6 @@ object Main extends App {
               rs = Some(
                 (task.asInstanceOf[sygus.PythonPBETask].outputVar + " = " + PostProcessor.clean(program).code,
                   timeout * 1000 - deadline.timeLeft.toMillis.toInt))
-              println(rs.get._1)
               break
             }
             else {
@@ -131,14 +130,13 @@ object Main extends App {
     rs
   }
 
-
-  def synthesize(filename: String, sizeBased: Boolean = true, probBased: Boolean = false) = {
+  def synthesize(filename: String, sizeBased: Boolean = true, probBased: Boolean = true) = {
     val task = new SygusFileTask(scala.io.Source.fromFile(filename).mkString)
     assert(task.isPBE)
     synthesizeSyGus(filename, task, sizeBased, probBased)
   }
 
-  def pySynthesize(filename: String, sizeBased: Boolean = false) : Option[(String, Int)] =
+  def pySynthesize(filename: String, sizeBased: Boolean = true) : Option[(String, Int)] =
   {
     val task: PySynthesisTask = PythonPBETask.fromString(fromFile(filename).mkString, sizeBased)
     synthesizePython(task, sizeBased)

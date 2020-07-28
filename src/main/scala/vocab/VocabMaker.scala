@@ -3,7 +3,6 @@ package vocab
 import ast.{ASTNode, BVLiteral, BVVariable, BoolLiteral, BoolVariable, IntLiteral, IntVariable, StringLiteral, StringVariable}
 import ast.Types.Types
 import enumeration.ProbUpdate
-import sygus.SygusFileTask
 
 import scala.collection.mutable
 
@@ -22,9 +21,9 @@ object VocabFactory {
 trait VocabMaker {
   val arity: Int
   val childTypes: List[Types]
-  val returnType: Types
   val nodeType: Class[_ <: ASTNode]
   val head: String
+  val returnType: Types
   def apply(children: List[ASTNode], contexts: List[Map[String,Any]]): ASTNode
   def canMake(children: List[ASTNode]): Boolean = children.length == arity && children.zip(childTypes).forall(pair => pair._1.nodeType == pair._2)
 
@@ -34,7 +33,8 @@ trait VocabMaker {
 
     ProbUpdate.priors(nodeType, Some(head)) else ProbUpdate.priors(nodeType, None)
   def init(progs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: VocabFactory, height: Int) : Iterator[ASTNode]
-  def probe_init(bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
-                 vocabFactory: VocabFactory, costLevel: Int, task: SygusFileTask) : Iterator[ASTNode]
+  def probe_init(progs: List[ASTNode],
+                 vocabFactory: VocabFactory,
+                 costLevel: Int, contexts: List[Map[String,Any]], bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode]
 }
 
