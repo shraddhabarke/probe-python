@@ -1,18 +1,23 @@
 package vocab
 
+import java.io.FileOutputStream
+
 import ast.Types.Types
 import ast._
 import enumeration.{InputsValuesManager, PyEnumerator, PyProbEnumerator}
-
+import trace.DebugPrints.iprintln
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
-abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, size: Boolean) extends PyVocabMaker with Iterator[ASTNode]
+abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, size: Boolean) extends VocabMaker with Iterator[ASTNode]
 {
+  var height_log = new FileOutputStream("output-height.txt", true)
+  var size_log = new FileOutputStream("output-size.txt", true)
+
   override val arity: Int = 2
+  def apply(children: List[ASTNode], contexts: List[Map[String,Any]]): ASTNode = null
 
   var listIter: Iterator[ASTNode] = _
-  var mapVocab: PyVocabFactory = _
+  var mapVocab: VocabFactory = _
   var contexts: List[Map[String, Any]] = _
 
   var costLevel: Int = _
@@ -31,7 +36,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
 
   def makeNode(lst: ASTNode, map: ASTNode) : ASTNode
 
-  override def init(progs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: PyVocabFactory, height: Int) : Iterator[ASTNode] = {
+  override def init(progs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: VocabFactory, height: Int) : Iterator[ASTNode] = {
     this.listIter = progs.filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
 
     this.childHeight = height - 1
@@ -45,20 +50,22 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
     // Filter the vocabs for the map function
     // TODO There has to be a more efficient way
     val newVarVocab = this.inputListType match {
-      case Types.PyString => new PyBasicVocabMaker {
+      case Types.PyString => new BasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyString
         override val nodeType: Class[_ <: ASTNode] = classOf[PyStringVariable]
+        override val head: String = ""
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyStringVariable(varName, contexts)
       }
-      case Types.PyInt => new PyBasicVocabMaker {
+      case Types.PyInt => new BasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyInt
         override val nodeType: Class[_ <: ASTNode] = classOf[PyIntVariable]
+        override val head: String = ""
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyIntVariable(varName, contexts)
@@ -68,14 +75,14 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
     // We don't support nested list comprehensions
     val vocabs = newVarVocab ::
       vocabFactory.leavesMakers :::
-      vocabFactory.nodeMakers.filter(_.isInstanceOf[PyBasicVocabMaker])
+      vocabFactory.nodeMakers.filter(_.isInstanceOf[BasicVocabMaker])
 
-    this.mapVocab = PyVocabFactory.apply(vocabs)
+    this.mapVocab = VocabFactory.apply(vocabs)
     this.nextList()
     this
   }
 
-  override def probe_init(progs: List[ASTNode], vocabFactory: PyVocabFactory, costLevel: Int, contexts: List[Map[String,Any]],
+  override def probe_init(progs: List[ASTNode], vocabFactory: VocabFactory, costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
 
     this.costLevel = costLevel - 1
@@ -90,20 +97,22 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
     // Filter the vocabs for the map function
     // TODO There has to be a more efficient way
     val newVarVocab = this.inputListType match {
-      case Types.PyString => new PyBasicVocabMaker {
+      case Types.PyString => new BasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyString
         override val nodeType: Class[_ <: ASTNode] = classOf[PyStringVariable]
+        override val head: String = ""
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyStringVariable(varName, contexts)
       }
-      case Types.PyInt => new PyBasicVocabMaker {
+      case Types.PyInt => new BasicVocabMaker {
         override val arity: Int = 0
         override val childTypes: List[Types] = Nil
         override val returnType: Types = Types.PyInt
         override val nodeType: Class[_ <: ASTNode] = classOf[PyIntVariable]
+        override val head: String = ""
 
         override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
           new PyIntVariable(varName, contexts)
@@ -113,9 +122,9 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
     // We don't support nested list comprehensions
     val vocabs = newVarVocab ::
       vocabFactory.leavesMakers :::
-      vocabFactory.nodeMakers.filter(_.isInstanceOf[PyBasicVocabMaker])
+      vocabFactory.nodeMakers.filter(_.isInstanceOf[BasicVocabMaker])
 
-    this.mapVocab = PyVocabFactory.apply(vocabs)
+    this.mapVocab = VocabFactory.apply(vocabs)
     this.nextList()
     this
   }
@@ -146,9 +155,12 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
       val next = this.enumerator.next()
       if (next.height > this.childHeight) {
         // We are out of map functions to synthesize for this list.
-        if (!this.nextList())
-        // We are also out of lists!
+        Console.withOut(height_log) { iprintln("===================Exiting Inner Loop===================\n") }
+        if (!this.nextList()) {
+          // We are also out of lists!
+          Console.withOut(height_log) { iprintln("============================Exiting Outer Loop============================\n") }
           return
+        }
       } else if (next.nodeType.eq(this.outputListType) && next.includes(this.varName)) {
         // next is a valid program
         val node = this.makeNode(this.currList, next)
@@ -162,14 +174,20 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
     if (this.enumerator == null) return
 
     while (this.nextProg.isEmpty) {
-      if (!this.enumerator.hasNext) return
+      if (!this.enumerator.hasNext) {
+        Console.withOut(size_log) { iprintln("============================Exiting Outer Loop============================\n") }
+        return
+      }
 
       val next = this.enumerator.next()
       if (next.cost > this.costLevel - this.currList.cost) {
         // We are out of map functions to synthesize for this list.
-        if (!this.nextList())
-        // We are also out of lists!
+        Console.withOut(size_log) { iprintln("===================Exiting Inner Loop===================\n") }
+        if (!this.nextList()) {
+          // We are also out of lists!
+          Console.withOut(size_log) { iprintln("============================Exiting Outer Loop============================\n") }
           return
+        }
       } else if (next.nodeType.eq(this.outputListType) && next.includes(this.varName)) {
         // next is a valid program
         val node = this.makeNode(this.currList, next)
@@ -191,8 +209,20 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
           .flatMap(context => this.currList.values(context._2).asInstanceOf[List[Any]]
             .map(value => context._1 + (this.varName -> value)))
         val oeValuesManager = new InputsValuesManager()
-        this.enumerator = if (!size) new PyEnumerator(this.mapVocab, oeValuesManager, newContexts) else
-                          new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false)
+        this.enumerator = if (!size) {
+          Console.withOut(height_log) {
+            iprintln(" ")
+            iprintln("ListCompVocabMaker", this.currList.code)
+            iprintln("==============Creating Nested Enumerator==============") }
+          new PyEnumerator(this.mapVocab, oeValuesManager, newContexts)
+        } else {
+          Console.withOut(size_log) {
+            iprintln(" ")
+            iprintln("ListCompVocabMaker", this.currList.code, this.currList.cost)
+            iprintln("CostLevel = %s".format(this.costLevel + 1))
+            iprintln("==============Creating Nested Enumerator==============") }
+          new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false)
+        }
         done = true
       }
     }
