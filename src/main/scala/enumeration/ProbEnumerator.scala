@@ -35,6 +35,7 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
   var childrenIterator: Iterator[List[ASTNode]] = null
   var currLevelProgs: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
   var bank = mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]()
+  var miniBank = mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]()
   var fos = new FileOutputStream("output-size.txt", true)
   var phaseCounter: Int = 0
   var fitsMap = mutable.Map[(Class[_], Option[Any]), Double]()
@@ -44,11 +45,12 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
   var costLevel = 0
 
   resetEnumeration()
-  var rootMaker: Iterator[ASTNode] = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
+  var rootMaker: Iterator[ASTNode] = currIter.next()
+    .probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank, false, miniBank)
 
   def resetEnumeration():  Unit = {
     currIter = vocab.leaves().toList.sortBy(_.rootCost).toIterator
-    rootMaker = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
+    rootMaker = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank, false, miniBank)
     childrenIterator = Iterator.single(Nil)
     currLevelProgs.clear()
     oeManager.clear()
@@ -62,7 +64,7 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
     while (rootMaker == null || !rootMaker.hasNext) {
       if (!currIter.hasNext) return false
       val next = currIter.next()
-      rootMaker = next.probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
+      rootMaker = next.probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank, false, miniBank)
     }
     true
   }

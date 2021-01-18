@@ -18,40 +18,44 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
   override def next: ASTNode =
     this(this.childIterator.next(), this.contexts)
 
-  override def rootCost: Int = if (nodeType == classOf[IntLiteral] || nodeType == classOf[StringLiteral] || nodeType == classOf[BoolLiteral]
-    || nodeType == classOf[StringVariable] || nodeType == classOf[BoolVariable] || nodeType == classOf[IntVariable]
+  override def rootCost: Int = if (nodeType == classOf[IntLiteral] || nodeType == classOf[StringLiteral]
+    || nodeType == classOf[BoolLiteral] || nodeType == classOf[StringVariable]
+    || nodeType == classOf[BoolVariable] || nodeType == classOf[IntVariable]
     || nodeType == classOf[BVLiteral] || nodeType == classOf[BVVariable])
-
     ProbUpdate.priors(nodeType, Some(head)) else ProbUpdate.priors(nodeType, None)
 
-  override def init(progs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: VocabFactory, height: Int) : Iterator[ASTNode] = {
+  override def init(programs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: VocabFactory, height: Int) : Iterator[ASTNode] = {
     this.contexts = contexts
 
     this.childIterator = if (this.arity == 0) {
       // No children needed, but we still return 1 value
       Iterator.single(Nil)
-    } else if (this.childTypes.map(t => progs.filter(c => t.equals(c.nodeType))).exists(_.isEmpty)) {
+    } else if (this.childTypes.map(t => programs.filter(c => t.equals(c.nodeType))).exists(_.isEmpty)) {
       Iterator.empty
     } else {
-      new ChildrenIterator(progs, childTypes, height)
+      new ChildrenIterator(programs, childTypes, height)
     }
     this
   }
 
-   def probe_init(progs: List[ASTNode],
+   def probe_init(programs: List[ASTNode],
                   vocabFactory: VocabFactory,
                   costLevel: Int,
                   contexts: List[Map[String, Any]],
-                  bank: mutable.Map[Int, ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
-
+                  bank: mutable.Map[Int, ArrayBuffer[ASTNode]],
+                  nested: Boolean,
+                  miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
      this.contexts = contexts
     this.childIterator = if (this.arity == 0 && this.rootCost == costLevel) {
       // No children needed, but we still return 1 value
       Iterator.single(Nil)
     } else if (this.rootCost < costLevel) {
       val childrenCost = costLevel - this.rootCost
-      new ProbChildrenIterator(this.childTypes, childrenCost, bank)
-    } else {
+      val children = new ProbChildrenIterator(this.childTypes, childrenCost, bank)
+      //if ((children.flatten.toList.exists(c => c.usesVariables == true) && nested) || !nested)
+      //else Iterator.empty }
+      children }
+    else {
       Iterator.empty
     }
     this

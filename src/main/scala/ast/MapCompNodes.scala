@@ -11,6 +11,8 @@ trait MapCompNode[K,V] extends MapNode[K,V]
   val value: ASTNode
   val varName: String
 
+  println(key.code, value.code)
+  println(key.values.length, value.values.length)
   assert(key.values.length == value.values.length, "Key and value did not match")
 
   override val keyType: Types = Types.childOf(list.nodeType)

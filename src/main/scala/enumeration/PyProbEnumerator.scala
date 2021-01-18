@@ -1,17 +1,22 @@
 package enumeration
 
 import java.io.FileOutputStream
-
 import ast.ASTNode
+import trace.DebugPrints
 import trace.DebugPrints.iprintln
 import vocab.{VocabFactory, VocabMaker}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
-class PyProbEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val contexts: List[Map[String,Any]], val probBased: Boolean) extends Iterator[ASTNode] {
-  override def toString(): String = "enumeration.Enumerator"
+class PyProbEnumerator(val vocab: VocabFactory,
+                       val oeManager: OEValuesManager,
+                       val contexts: List[Map[String,Any]],
+                       val probBased: Boolean, var nested: Boolean,
+                       var initCost: Int,
+                       var bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) extends Iterator[ASTNode] {
 
+  override def toString(): String = "enumeration.Enumerator"
   var nextProgram: Option[ASTNode] = None
 
   override def hasNext: Boolean =
@@ -31,23 +36,35 @@ class PyProbEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, 
     res
   }
 
-  var currIter: Iterator[VocabMaker] = null
-  var currLevelProgs: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
-  var bank = mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]()
-  var size_log = new FileOutputStream("output-size.txt", true)
+  var costLevel = initCost
+  var currIterator: Iterator[VocabMaker] = _
+  var currLevelPrograms: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
+  var miniBank = mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]()
+  var size_log = new FileOutputStream("output-dict.txt", true)
+  val totalLeaves = vocab.leaves().toList.distinct ++ vocab.nonLeaves().toList.distinct
   ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)
   ProbUpdate.priors = ProbUpdate.createPyPrior(vocab)
-
-  var costLevel = 0
   resetEnumeration()
-  var rootMaker: Iterator[ASTNode] = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
+  if (!nested) { bank.clear() }
+
+  if (nested) {
+    //costLevel = if (bank.isEmpty) 0 else bank.values.last.last.cost
+    bank.values.flatten.toList.foreach(p => oeManager.isRepresentative(p)) // does this take care of OE?
+  }
+
+  DebugPrints.iprintln()
+
+  nested = false  // Reset nested flag
+
+  var rootMaker: Iterator[ASTNode] = currIterator.next().
+    probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank)
+
 
   def resetEnumeration(): Unit = {
-    currIter = vocab.leaves().toList.sortBy(_.rootCost).toIterator
-    rootMaker = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank)
-    currLevelProgs.clear()
+    currIterator = totalLeaves.sortBy(_.rootCost).iterator
+    rootMaker = currIterator.next().probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank)
+    currLevelPrograms.clear()
     oeManager.clear()
-    bank.clear()
   }
 
   /**
@@ -59,9 +76,9 @@ class PyProbEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, 
   def advanceRoot(): Boolean = {
     rootMaker = null
     while (rootMaker == null || !rootMaker.hasNext) {
-      if (!currIter.hasNext) return false
-      val next = currIter.next()
-      rootMaker = next.probe_init(bank.map(c => c._2).flatten.toList, vocab, costLevel, contexts, bank)
+      if (!currIterator.hasNext) return false
+      val next = currIterator.next()
+      rootMaker = next.probe_init(bank.values.flatten.toList, vocab, costLevel, contexts, bank, nested, miniBank)
     }
     true
   }
@@ -74,14 +91,13 @@ class PyProbEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, 
   }
 
   def changeLevel(): Boolean = {
-    val sortedLeaves = vocab.leaves().toList.sortBy(_.rootCost)
-    currIter = if (sortedLeaves.last.rootCost <= costLevel)
-      vocab.nonLeaves.toList.sortBy(_.rootCost).toIterator else
-      sortedLeaves.toIterator
-
-    for (p <- currLevelProgs) updateBank(p)
+    currIterator = totalLeaves.sortBy(_.rootCost).iterator //todo: more efficient
+    for (p <- currLevelPrograms) updateBank(p)
     costLevel += 1
-    currLevelProgs.clear()
+    if (!bank.isEmpty) Console.withOut(size_log) { iprintln("Bank", bank.values.flatten.toList.map(c => c.code)) }
+    Console.withOut(size_log) { iprintln("============================OE CostLevel============================", costLevel)
+      iprintln(" ") }
+    currLevelPrograms.clear()
     advanceRoot()
   }
 
@@ -91,13 +107,13 @@ class PyProbEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, 
     // Iterate while no non-equivalent program is found
     while (res.isEmpty) {
       if (rootMaker.hasNext) {
-        val prog = rootMaker.next
+        val program = rootMaker.next
 
-        if (prog.values.nonEmpty && oeManager.isRepresentative(prog)) {
-          res = Some(prog)
+        if (program.values.nonEmpty && oeManager.isRepresentative(program)) {
+          res = Some(program)
         }
       }
-      else if (currIter.hasNext) {
+      else if (currIterator.hasNext) {
         if (!advanceRoot()) {
           if (!changeLevel()) changeLevel()
         }
@@ -106,8 +122,9 @@ class PyProbEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, 
         changeLevel()
       }
     }
-    currLevelProgs += res.get
-    Console.withOut(size_log) { iprintln(currLevelProgs.takeRight(1).map(c => (c.code, c.cost))) }
+    currLevelPrograms += res.get
+    Console.withOut(size_log) { iprintln("OP:", currLevelPrograms.takeRight(1).map(c => (c.code, c.cost, c.values))) }
+
     res
   }
 }

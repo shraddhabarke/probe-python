@@ -30,11 +30,13 @@ trait VocabMaker {
   def rootCost: Int = if (nodeType == classOf[IntLiteral] || nodeType == classOf[StringLiteral] || nodeType == classOf[BoolLiteral]
     || nodeType == classOf[StringVariable] || nodeType == classOf[BoolVariable] || nodeType == classOf[IntVariable]
     || nodeType == classOf[BVLiteral] || nodeType == classOf[BVVariable])
-
     ProbUpdate.priors(nodeType, Some(head)) else ProbUpdate.priors(nodeType, None)
-  def init(progs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: VocabFactory, height: Int) : Iterator[ASTNode]
-  def probe_init(progs: List[ASTNode],
-                 vocabFactory: VocabFactory,
-                 costLevel: Int, contexts: List[Map[String,Any]], bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode]
-}
 
+  def init(programs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: VocabFactory, height: Int) : Iterator[ASTNode]
+  def probe_init(programs: List[ASTNode],
+                 vocabFactory: VocabFactory,
+                 costLevel: Int, contexts: List[Map[String,Any]],
+                 bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
+                 nested: Boolean,
+                 miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode]
+}

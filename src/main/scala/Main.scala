@@ -8,17 +8,19 @@ import util.control.Breaks._
 import scala.concurrent.duration._
 import trace.DebugPrints.{dprintln, iprintln}
 
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 import scala.io.Source.fromFile
 
 object Main extends App {
   val filename =
-  "src/test/benchmarks/euphony-test/exceljet3.sl"
+  //"src/test/benchmarks/euphony-test/exceljet3.sl"
   //"src/test/benchmarks/too-hard/43606446.sl"
   //"src/test/benchmarks/euphony-test/36462127.sl"
   //"src/test/resources/old_benchmarks/rotate.examples.json"
   //"src/test/resources/benchmarks/abbreviate_2_ex.examples.json"
   //"src/test/resources/old_benchmarks/filter_map.examples.json"
-  //"src/test/resources/old_benchmarks/get_middle.examples.json"
+  "src/test/resources/old_benchmarks/get_middle.examples.json"
   //"src/test/resources/benchmarks/abbreviate_1_ex.examples.json"
   //"src/test/resources/old_benchmarks/string_length.examples.json"
   //"src/test/resources/old_benchmarks/vowel_count.examples.json"
@@ -86,14 +88,16 @@ object Main extends App {
     p
   }
 
-  def synthesizePython(task: PySynthesisTask, sizeBased: Boolean, timeout: Int = 20) : Option[(String, Int)] =
+  def synthesizePython(task: PySynthesisTask, sizeBased: Boolean, timeout: Int = 50000) : Option[(String, Int)] =
   {
     var rs: Option[(String, Int)] = None
     val oeManager = new InputsValuesManager()
+    var bank = mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]()
     val enumerator = if (!sizeBased) new enumeration.PyEnumerator(
       task.vocab,
       oeManager,
-      task.examples.map(_.input)) else new enumeration.PyProbEnumerator(task.vocab, oeManager, task.examples.map(_.input), false)
+      task.examples.map(_.input)) else
+      new enumeration.PyProbEnumerator(task.vocab, oeManager, task.examples.map(_.input), false, false, 0, bank)
     val deadline = timeout.seconds.fromNow
 
     breakable {

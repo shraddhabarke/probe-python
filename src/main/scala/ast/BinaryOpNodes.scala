@@ -1,12 +1,20 @@
 package ast
 
-import trace.DebugPrints.eprintln
+import trace.DebugPrints.{eprintln, iprintln}
+
+import java.io.FileOutputStream
 
 trait BinaryOpNode[T] extends ASTNode{
   val lhs: ASTNode
   val rhs: ASTNode
   override val height: Int = 1 + Math.max(lhs.height,rhs.height)
   override val terms: Int = 1 + lhs.terms + rhs.terms
+  if (lhs.values.length != rhs.values.length) {
+    Console.withOut(new FileOutputStream("output-dict.txt", true)) {
+      iprintln(lhs.code, rhs.code)
+      iprintln(lhs.values, rhs.values)
+    }
+  }
   assert(lhs.values.length == rhs.values.length)
   def doOp(l: Any, r: Any): Option[T]
   def make(l: ASTNode, r: ASTNode): BinaryOpNode[T]
@@ -353,7 +361,6 @@ class PyStringConcat(val lhs: PyStringNode, val rhs: PyStringNode) extends Binar
 {
   override protected val parenless: Boolean = false
   override lazy val code: String = lhs.code + " + " + rhs.code
-
   override def doOp(l: Any, r: Any): Option[String] = (l, r) match {
     case (l: String, r: String) => Some(l + r)
     case _ => wrongType(l, r)
