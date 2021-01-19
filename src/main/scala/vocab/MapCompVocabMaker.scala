@@ -3,7 +3,7 @@ package vocab
 import java.io.FileOutputStream
 import ast.Types.Types
 import ast._
-import enumeration.{InputsValuesManager, PyEnumerator, PyProbEnumerator}
+import enumeration.{Contexts, InputsValuesManager, PyEnumerator, PyProbEnumerator}
 import trace.DebugPrints
 import trace.DebugPrints.iprintln
 
@@ -30,7 +30,8 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
   var nestedCost: Int = _
   var miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]] = _
   // TODO- miniBank: mutable.Map[classOf, mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]]
-  var bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
+  var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
+  var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var nextProg: Option[ASTNode] = None
 
   assert(iterableType.equals(Types.PyString) ||
@@ -106,24 +107,25 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
                           nested: Boolean,
                           miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
     DebugPrints.setInfo()
-
     this.listIter = programs.filter(n => n.nodeType.equals(this.iterableType)).iterator
     /**
      * The outer enumerator bank contains list and dictionary comprehension programs
      * which are not needed here since there is no nested enumeration.
      * Also filter the programs from the bank that do not correspond to the valueType.
      */
-    this.bank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName) && c.nodeType.equals(this.valueType)))).dropRight(1)
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
     this.costLevel = costLevel - 1
     this.varName = "var"
     this.contexts = contexts
     this.miniBank = miniBank
     this.nestedCost = 0
+
     Console.withOut(size_log) {
       iprintln(" ")
       iprintln("Iterator:", programs.filter(n => n.nodeType.equals(this.iterableType) && !n.includes(this.varName)).map(c => c.code))
       iprintln("MiniBank from outer enumerator:", this.miniBank.values.map(c => c.toList.map(d => (d.code))))
-      iprintln("Bank1:", this.bank.values.map(c => c.toList.map(d => (d.code))))
+      iprintln("Bank1:", this.tempBank.values.map(c => c.toList.map(d => (d.code))))
       iprintln("CostLevel:", costLevel)
 
       iprintln(" ")
@@ -201,10 +203,10 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
   private def updateMainBank(values: ArrayBuffer[ASTNode]): Unit = {
     values.map(c =>
-      if (!this.bank.contains(c.cost))
-        this.bank(c.cost) = ArrayBuffer(c)
+      if (!this.tempBank.contains(c.cost))
+        this.tempBank(c.cost) = ArrayBuffer(c)
       else
-        this.bank(c.cost) += c)
+        this.tempBank(c.cost) += c)
   }
 
   private def nextProgram() : Unit =
@@ -248,16 +250,17 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
         // We are out of map functions to synthesize for this list.
 
         if (!this.nextList()) {
+
           // We are also out of lists!
           return
         }
       } else if (value.nodeType.eq(this.valueType) && value.includes(this.varName)) {
 
-        updateMiniBank(this.currList, value)       // TODO: update miniBank with only variable programs
+       // updateMiniBank(this.currList, value)       // TODO: update miniBank with only variable programs
 
-        Console.withOut(size_log) {
-          iprintln("Updating Mini Bank,", this.currList.code, value.code)
-        }
+        //Console.withOut(size_log) {
+          //iprintln("Updating Mini Bank,", this.currList.code, value.code)
+        //}
 
         // next is a valid program
         val node = this.makeNode(
@@ -292,26 +295,32 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
           new PyEnumerator(this.mapVocab, oeValuesManager, newContexts)
         } else {
 
+          this.tempBank.clear()
+          Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
+          if (newContexts.length != this.contexts.length)
+            this.mainBank.foreach(c => this.tempBank += (c._1 -> c._2.map(d => d.updateValues)))
+          else this.tempBank = this.mainBank
+
           Console.withOut(size_log) {
             iprintln("------------------------------------------------------------------------------------------------------")
             iprintln("MapCompVocabMaker", this.nodeType, this.currList.code, this.currList.cost)
             iprintln("CostLevel = %s".format(this.costLevel + 1)) }
 
-          if(miniBank.contains(this.currList)) {
-            updateMainBank(this.miniBank(this.currList))
-            this.nestedCost = this.miniBank(this.currList).last.cost
-          }
+         // if(miniBank.contains(this.currList)) {
+           // updateMainBank(this.miniBank(this.currList))
+            //this.nestedCost = this.miniBank(this.currList).last.cost
+          //}
           // TODO: add the programs from the miniBank to the main bank; pass the updated bank as parameter to the new enumerator object
 
           Console.withOut(size_log) {
             if (this.miniBank.contains(this.currList))
               iprintln("Mini Bank:", this.currList.code, this.miniBank(this.currList).map(c => c.code))
-            iprintln("Bank2:", this.bank.values.map(c => c.toList.map(d => (d.code))))
+            iprintln("Bank2:", this.tempBank.values.map(c => c.toList.map(d => (d.code))))
             iprintln(" ")
           }
 
-          new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts,
-            false, true, this.nestedCost, this.bank)
+            new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts,
+            false, true, this.nestedCost, this.tempBank)
         }
         done = true
       }
@@ -337,8 +346,10 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
   var childHeight: Int = _
   var keyName: String = _
   var costLevel: Int = _
-  var bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
-
+  var miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]] = _
+  // TODO- miniBank: mutable.Map[classOf, mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]]
+  var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
+  var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var nextProg: Option[ASTNode] = None
 
   assert(keyType.equals(Types.PyInt) || keyType.equals(Types.PyString),
@@ -407,8 +418,10 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
     this.keyName = "key"
     this.contexts = contexts
     this.costLevel = if (costLevel == 0) 0 else costLevel - 1   // Non-negative Cost
-    this.bank = bank
-    // Make sure the name is unique
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.keyName)))).dropRight(1)
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.keyName)))).dropRight(1)    // Make sure the name is unique
+    this.miniBank = miniBank
+
     // TODO We need a nicer way to generate this
     while (contexts.head.contains(this.keyName)) this.keyName = "_" + this.keyName
 
@@ -537,7 +550,13 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
         this.enumerator = if (!size) {
           new PyEnumerator(this.filterVocab, oeValuesManager, newContexts) }
         else {
-          new PyProbEnumerator(this.filterVocab, oeValuesManager, newContexts, false, true, 0, this.bank)
+          this.tempBank.clear()
+          Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
+          if (newContexts.length != this.contexts.length)
+            this.mainBank.foreach(c => this.tempBank += (c._1 -> c._2.map(d => d.updateValues)))
+          else this.tempBank = this.mainBank
+
+          new PyProbEnumerator(this.filterVocab, oeValuesManager, newContexts, false, true, 0, this.tempBank)
         }
         done = true
       }

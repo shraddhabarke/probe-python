@@ -9,6 +9,7 @@ trait TernaryOpNode[T] extends ASTNode
   override val height: Int = 1 + Math.max(arg0.height, Math.max(arg1.height, arg2.height))
   override val terms : Int = 1 + arg0.terms + arg1.terms + arg2.terms
   override val children: Iterable[ASTNode] = Iterable(arg0, arg1, arg2)
+  override def updateValues = ???
 
   val arg0: ASTNode
   val arg1: ASTNode

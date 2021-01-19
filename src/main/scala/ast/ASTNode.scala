@@ -1,7 +1,7 @@
 package ast
 
 import ast.Types.Types
-import enumeration.ProbUpdate
+import enumeration.{Contexts, ProbUpdate}
 trait ASTNode {
   val nodeType: Types.Types
   val values: List[Any]
@@ -22,11 +22,13 @@ trait ASTNode {
     children.foreach(_.renewCost)
     _cost = Some(ProbUpdate.getRootPrior(this) + children.map(c => c.cost).sum)
   }
+  def updateValues: ASTNode
 }
 
 trait StringNode extends ASTNode {
   override val values: List[String]
   override val nodeType = Types.String
+
 }
 
 trait IntNode extends ASTNode {

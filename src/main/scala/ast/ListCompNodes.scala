@@ -26,6 +26,8 @@ trait ListCompNode[T] extends ListNode[T]
   override def includes(varName: String): Boolean =
     varName.equals(this.varName) || list.includes(varName) || map.includes(varName)
   override lazy val usesVariables: Boolean = list.usesVariables || map.usesVariables
+  override def updateValues = ???
+
 }
 
 class StringToStringListCompNode(val list: ListNode[String], val map: PyStringNode, val varName: String) extends ListCompNode[String]

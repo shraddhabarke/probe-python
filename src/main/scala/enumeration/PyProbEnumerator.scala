@@ -45,13 +45,10 @@ class PyProbEnumerator(val vocab: VocabFactory,
   ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)
   ProbUpdate.priors = ProbUpdate.createPyPrior(vocab)
   resetEnumeration()
-  if (!nested) { bank.clear() }
 
-  if (nested) {
-    //costLevel = if (bank.isEmpty) 0 else bank.values.last.last.cost
-    bank.values.flatten.toList.foreach(p => oeManager.isRepresentative(p)) // does this take care of OE?
-  }
-
+  Contexts.contextLen = this.contexts.length
+  Contexts.contexts = this.contexts
+  bank.values.flatten.toList.foreach(p => oeManager.isRepresentative(p)) // does this take care of OE?
   DebugPrints.iprintln()
 
   nested = false  // Reset nested flag

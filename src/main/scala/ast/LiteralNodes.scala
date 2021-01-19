@@ -1,37 +1,45 @@
 package ast
 
+import enumeration.Contexts
+
 abstract class LiteralNode[T](numContexts: Int) extends ASTNode{
   assert(numContexts > 0)
   val height = 0
   val terms = 1
   val value: T
-  val values: List[T] = List.fill(numContexts)(value)
+  override val values: List[T] = List.fill(numContexts)(value)
   override val children: Iterable[ASTNode] = Iterable.empty
   def includes(varName: String): Boolean = false
   override lazy val usesVariables: Boolean = false
 
 }
-class StringLiteral(val value: String, numContexts: Int) extends LiteralNode[String](numContexts) with StringNode{
+case class StringLiteral(val value: String, numContexts: Int) extends LiteralNode[String](numContexts) with StringNode{
   override lazy val code: String = '"' + value + '"' //escape?
   override protected val parenless: Boolean = true
+  override def updateValues = copy(value, numContexts = Contexts.contextLen)
+
 }
 
-class IntLiteral(val value: Int, numContexts: Int) extends LiteralNode[Int](numContexts) with IntNode{
+case class IntLiteral(val value: Int, numContexts: Int) extends LiteralNode[Int](numContexts) with IntNode{
   override lazy val code: String = value.toString
   override protected val parenless: Boolean = true
+  override def updateValues = copy(value, numContexts = Contexts.contextLen)
 }
 
-class BoolLiteral(val value: Boolean, numContexts: Int) extends LiteralNode[Boolean](numContexts) with BoolNode {
+case class BoolLiteral(val value: Boolean, numContexts: Int) extends LiteralNode[Boolean](numContexts) with BoolNode {
   override lazy val code: String = value.toString
   override protected val parenless: Boolean = true
+  override def updateValues = copy(value, numContexts = Contexts.contextLen)
 }
 
-class BVLiteral(val value: Long, numContexts: Int) extends LiteralNode[Long](numContexts) with BVNode {
+case class BVLiteral(val value: Long, numContexts: Int) extends LiteralNode[Long](numContexts) with BVNode {
   override lazy val code: String = f"#x$value%016x"
   override protected val parenless: Boolean = true
+  override def updateValues = copy(value, numContexts = Contexts.contextLen)
+
 }
 
-class PyStringLiteral(val value: String, numContexts: Int) extends LiteralNode[String](numContexts) with PyStringNode
+case class PyStringLiteral(val value: String, numContexts: Int) extends LiteralNode[String](numContexts) with PyStringNode
 {
   override protected val parenless: Boolean = true
   override val code: String = '"' + value.flatMap(c => if (c.toInt >= 32 && c.toInt <= 127 && c != '\\' && c != '"') c.toString
@@ -47,16 +55,22 @@ class PyStringLiteral(val value: String, numContexts: Int) extends LiteralNode[S
     case 13 => "\\r" //cr
     case _ => "\\x" + c.toInt.toHexString
   }) + '"'
+  override def updateValues = copy(value, numContexts = Contexts.contextLen)
+
 }
 
-class PyIntLiteral(val value: Int, numContexts: Int) extends LiteralNode[Int](numContexts) with PyIntNode
+case class PyIntLiteral(val value: Int, numContexts: Int) extends LiteralNode[Int](numContexts) with PyIntNode
 {
   override protected val parenless: Boolean = true
   override val code: String = value.toString
+  override def updateValues = copy(value, numContexts = Contexts.contextLen)
+
 }
 
-class PyBoolLiteral(val value: Boolean, numContexts: Int) extends LiteralNode[Boolean](numContexts) with PyBoolNode
+case class PyBoolLiteral(val value: Boolean, numContexts: Int) extends LiteralNode[Boolean](numContexts) with PyBoolNode
 {
   override protected val parenless: Boolean = true
   override val code: String = value.toString.capitalize
+  override def updateValues = copy(value, numContexts = Contexts.contextLen)
+
 }

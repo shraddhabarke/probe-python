@@ -13,6 +13,7 @@ trait UnaryOpNode[T] extends ASTNode
   override val terms: Int = 1 + arg.terms
   override val children: Iterable[ASTNode] = Iterable(arg)
   val arg: ASTNode
+  override def updateValues = ???
 
   def doOp(x: Any): Option[T]
   def make(x: ASTNode): UnaryOpNode[T]

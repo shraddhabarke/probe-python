@@ -39,6 +39,9 @@ trait QuaternaryOpNode[T] extends ASTNode
   override lazy val usesVariables: Boolean =
     arg0.usesVariables || arg1.usesVariables ||
       arg2.usesVariables || arg3.usesVariables
+
+  override def updateValues = ???
+
 }
 
 // TODO Test is extensively before adding it

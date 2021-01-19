@@ -3,7 +3,7 @@ package vocab
 import java.io.FileOutputStream
 import ast.Types.Types
 import ast._
-import enumeration.{InputsValuesManager, PyEnumerator, PyProbEnumerator}
+import enumeration.{Contexts, InputsValuesManager, PyEnumerator, PyProbEnumerator}
 import trace.DebugPrints
 import trace.DebugPrints.iprintln
 
@@ -28,9 +28,11 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
   var currList: ASTNode = _
   var childHeight: Int = _
   var varName: String = _
-  var bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
-  var miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]] = _
   var nextProg: Option[ASTNode] = None
+  var miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]] = _
+  // TODO- miniBank: mutable.Map[classOf, mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]]
+  var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
+  var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
 
   assert(inputListType.equals(Types.PyInt) || inputListType.equals(Types.PyString),
     s"List comprehension input type not supported: $inputListType")
@@ -94,10 +96,11 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
 
     this.costLevel = costLevel - 1
     this.listIter = programs.filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
     this.varName = "var"
     this.contexts = contexts
     this.miniBank = miniBank
-    this.bank = bank
 
     // Make sure the name is unique
     // TODO We need a nicer way to generate this
@@ -130,7 +133,8 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
 
     val vocabs = newVarVocab ::
       vocabFactory.leavesMakers :::
-      vocabFactory.nodeMakers.filter(_.isInstanceOf[BasicVocabMaker])  // We don't support nested list comprehensions
+      vocabFactory.nodeMakers.filter(c => c.isInstanceOf[BasicVocabMaker]
+        && c.returnType.equals(this.outputListType)) // We don't support nested list comprehensions
 
     this.mapVocab = VocabFactory.apply(vocabs)
     this.nextList()
@@ -193,6 +197,8 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
           return
         }
       } else if (next.nodeType.eq(this.outputListType) && next.includes(this.varName)) {
+        // updateMiniBank(this.currList, value)       // TODO: update miniBank with only variable programs
+
         // next is a valid program
         val node = this.makeNode(this.currList, next)
         this.nextProg = Some(node)
@@ -221,7 +227,6 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
           .flatMap(context => this.currList.values(context._2).asInstanceOf[List[Any]]
             .map(value => context._1 + (this.varName -> value)))
         val oeValuesManager = new InputsValuesManager()
-        val cachedPrograms = this.miniBank.get(this.currList)
         this.enumerator = if (!size) {
           Console.withOut(height_log) {
             iprintln(" ")
@@ -229,7 +234,13 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
             iprintln("=====Creating Nested Enumerator====") }
           new PyEnumerator(this.mapVocab, oeValuesManager, newContexts)
         } else {
-          new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false, true, 0, this.bank)
+          this.tempBank.clear()
+          Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
+          if (newContexts.length != this.contexts.length)
+            this.mainBank.foreach(c => this.tempBank += (c._1 -> c._2.map(d => d.updateValues)))
+          else this.tempBank = this.mainBank
+
+          new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false, true, 0, this.tempBank)
         }
         done = true
       }
