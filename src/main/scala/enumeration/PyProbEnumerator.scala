@@ -39,7 +39,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
   var costLevel = initCost
   var currIterator: Iterator[VocabMaker] = _
   var currLevelPrograms: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
-  var miniBank = mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]()
+  var miniBank = mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]()
   var size_log = new FileOutputStream("output-dict.txt", true)
   val totalLeaves = vocab.leaves().toList.distinct ++ vocab.nonLeaves().toList.distinct
   ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)

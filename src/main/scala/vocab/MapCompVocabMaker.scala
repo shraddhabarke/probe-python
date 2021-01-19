@@ -28,8 +28,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
   var childHeight: Int = _
   var varName: String = _
   var nestedCost: Int = _
-  var miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]] = _
-  // TODO- miniBank: mutable.Map[classOf, mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]]
+  var miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]] = _
   var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var nextProg: Option[ASTNode] = None
@@ -105,7 +104,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
                           costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
-                          miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
+                          miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
     DebugPrints.setInfo()
     this.listIter = programs.filter(n => n.nodeType.equals(this.iterableType)).iterator
     /**
@@ -194,7 +193,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
     rs
   }
 
-  private def updateMiniBank(key: ASTNode, value: ASTNode): Unit = {
+  private def updateMiniBank(key: (Class[_], ASTNode), value: ASTNode): Unit = {
     if (!this.miniBank.contains(key))
       this.miniBank(key) = ArrayBuffer(value)
     else
@@ -256,7 +255,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
         }
       } else if (value.nodeType.eq(this.valueType) && value.includes(this.varName)) {
 
-       // updateMiniBank(this.currList, value)       // TODO: update miniBank with only variable programs
+        updateMiniBank((this.nodeType, this.currList), value)       // TODO: update miniBank with only variable programs
 
         //Console.withOut(size_log) {
           //iprintln("Updating Mini Bank,", this.currList.code, value.code)
@@ -313,10 +312,10 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
           // TODO: add the programs from the miniBank to the main bank; pass the updated bank as parameter to the new enumerator object
 
           Console.withOut(size_log) {
-            if (this.miniBank.contains(this.currList))
-              iprintln("Mini Bank:", this.currList.code, this.miniBank(this.currList).map(c => c.code))
-            iprintln("Bank2:", this.tempBank.values.map(c => c.toList.map(d => (d.code))))
-            iprintln(" ")
+            if (this.miniBank.contains((this.nodeType, this.currList)))
+              iprintln("Mini Bank:", this.currList.code, this.miniBank(this.nodeType, this.currList).map(c => c.code))
+              iprintln("Bank2:", this.tempBank.values.map(c => c.toList.map(d => (d.code))))
+              iprintln(" ")
           }
 
             new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts,
@@ -346,7 +345,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
   var childHeight: Int = _
   var keyName: String = _
   var costLevel: Int = _
-  var miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]] = _
+  var miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]] = _
   // TODO- miniBank: mutable.Map[classOf, mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]]
   var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
@@ -412,7 +411,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
   override def probe_init(progs: List[ASTNode], vocabFactory: VocabFactory, costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
-                          miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] =
+                          miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] =
   {
     this.mapIter = progs.filter(n => n.isInstanceOf[VariableNode[_]] && n.nodeType.equals(Types.Map(keyType, valueType))).iterator
     this.keyName = "key"

@@ -38,5 +38,5 @@ trait VocabMaker {
                  costLevel: Int, contexts: List[Map[String,Any]],
                  bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                  nested: Boolean,
-                 miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode]
+                 miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode]
 }

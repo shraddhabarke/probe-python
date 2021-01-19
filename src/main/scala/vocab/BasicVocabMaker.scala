@@ -44,9 +44,9 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
                   contexts: List[Map[String, Any]],
                   bank: mutable.Map[Int, ArrayBuffer[ASTNode]],
                   nested: Boolean,
-                  miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
+                  miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
      this.contexts = contexts
-    this.childIterator = if (this.arity == 0 && this.rootCost == costLevel) {
+     this.childIterator = if (this.arity == 0 && this.rootCost == costLevel) {
       // No children needed, but we still return 1 value
       Iterator.single(Nil)
     } else if (this.rootCost < costLevel) {

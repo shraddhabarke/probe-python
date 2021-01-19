@@ -29,8 +29,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
   var childHeight: Int = _
   var varName: String = _
   var nextProg: Option[ASTNode] = None
-  var miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]] = _
-  // TODO- miniBank: mutable.Map[classOf, mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]]
+  var miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]] = _
   var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
 
@@ -92,7 +91,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
                           costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
-                          miniBank: mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
+                          miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
 
     this.costLevel = costLevel - 1
     this.listIter = programs.filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
@@ -197,21 +196,28 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
           return
         }
       } else if (next.nodeType.eq(this.outputListType) && next.includes(this.varName)) {
-        // updateMiniBank(this.currList, value)       // TODO: update miniBank with only variable programs
 
+        updateMiniBank((this.nodeType, this.currList), next) // update miniBanks
         // next is a valid program
         val node = this.makeNode(this.currList, next)
         this.nextProg = Some(node)
-        updateBank(this.currList, next) // update miniBanks
     }
     }
   }
 
-  private def updateBank(lst: ASTNode, map: ASTNode): Unit = {
-    if (!this.miniBank.contains(lst))
-      this.miniBank(lst) = ArrayBuffer(map)
+  private def updateMiniBank(key: (Class[_], ASTNode), value: ASTNode): Unit = {
+    if (!this.miniBank.contains(key))
+      this.miniBank(key) = ArrayBuffer(value)
     else
-      this.miniBank(lst) += map
+      this.miniBank(key) += value
+  }
+
+  private def updateMainBank(values: ArrayBuffer[ASTNode]): Unit = {
+    values.map(c =>
+      if (!this.tempBank.contains(c.cost))
+        this.tempBank(c.cost) = ArrayBuffer(c)
+      else
+        this.tempBank(c.cost) += c)
   }
 
   private def nextList() : Boolean =

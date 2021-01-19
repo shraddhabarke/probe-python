@@ -1,6 +1,5 @@
 package ast
 
-import enumeration.Contexts
 import trace.DebugPrints.{eprintln, iprintln}
 
 import java.io.FileOutputStream
@@ -10,13 +9,7 @@ trait BinaryOpNode[T] extends ASTNode{
   val rhs: ASTNode
   override val height: Int = 1 + Math.max(lhs.height,rhs.height)
   override val terms: Int = 1 + lhs.terms + rhs.terms
-  if (lhs.values.length != rhs.values.length) {
-    Console.withOut(new FileOutputStream("output-dict.txt", true)) {
-      iprintln(lhs.code, rhs.code)
-      iprintln(lhs.values, rhs.values)
-    }
-  }
-
+  println(lhs.code, rhs.code)
   assert(lhs.values.length == rhs.values.length)
   def doOp(l: Any, r: Any): Option[T]
   def make(l: ASTNode, r: ASTNode): BinaryOpNode[T]
@@ -48,7 +41,7 @@ case class StringConcat(val lhs: StringNode, val rhs: StringNode) extends Binary
   override lazy val code: String = "(str.++ " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[String] =
     new StringConcat(l.asInstanceOf[StringNode], r.asInstanceOf[StringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[StringNode], rhs.updateValues.asInstanceOf[StringNode])
 
 }
 
@@ -67,7 +60,7 @@ case class StringAt(val lhs: StringNode, val rhs: IntNode) extends BinaryOpNode[
   override lazy val code: String = "(str.at " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[String] =
     new StringAt(l.asInstanceOf[StringNode], r.asInstanceOf[IntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[StringNode], rhs.updateValues.asInstanceOf[IntNode])
 
 }
 
@@ -82,7 +75,7 @@ case class IntAddition(val lhs: IntNode, val rhs: IntNode) extends BinaryOpNode[
   override lazy val code: String = "(+ " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new IntAddition(l.asInstanceOf[IntNode], r.asInstanceOf[IntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[IntNode], rhs.updateValues.asInstanceOf[IntNode])
 
 }
 
@@ -96,7 +89,7 @@ case class IntSubtraction(val lhs: IntNode, val rhs: IntNode)extends BinaryOpNod
   override lazy val code: String = "(- " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new IntSubtraction(l.asInstanceOf[IntNode], r.asInstanceOf[IntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[IntNode], rhs.updateValues.asInstanceOf[IntNode])
 
 }
 
@@ -109,7 +102,7 @@ case class IntLessThanEq(val lhs: IntNode, val rhs: IntNode) extends BinaryOpNod
   override lazy val code: String = "(<= " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new IntLessThanEq(l.asInstanceOf[IntNode], r.asInstanceOf[IntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[IntNode], rhs.updateValues.asInstanceOf[IntNode])
 
 }
 
@@ -122,7 +115,7 @@ case class IntEquals(val lhs: IntNode, val rhs: IntNode) extends BinaryOpNode[Bo
   override lazy val code: String = "(= " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new IntEquals(l.asInstanceOf[IntNode], r.asInstanceOf[IntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[IntNode], rhs.updateValues.asInstanceOf[IntNode])
 
 }
 
@@ -136,7 +129,7 @@ case class PrefixOf(val lhs: StringNode, val rhs: StringNode) extends BinaryOpNo
   override lazy val code: String = "(str.prefixof " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new PrefixOf(l.asInstanceOf[StringNode], r.asInstanceOf[StringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[StringNode], rhs.updateValues.asInstanceOf[StringNode])
 
 }
 
@@ -149,7 +142,7 @@ case class SuffixOf(val lhs: StringNode, val rhs: StringNode) extends BinaryOpNo
   override lazy val code: String = "(str.suffixof " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new SuffixOf(l.asInstanceOf[StringNode], r.asInstanceOf[StringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[StringNode], rhs.updateValues.asInstanceOf[StringNode])
 
 }
 
@@ -162,7 +155,7 @@ case class Contains(val lhs: StringNode, val rhs: StringNode) extends  BinaryOpN
   override lazy val code: String = "(str.contains " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new Contains(l.asInstanceOf[StringNode], r.asInstanceOf[StringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[StringNode], rhs.updateValues.asInstanceOf[StringNode])
 
 }
 
@@ -175,7 +168,7 @@ case class BVAnd(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] wi
   override lazy val code: String = "(bvand " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVAnd(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -188,7 +181,7 @@ case class BVOr(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] wit
   override lazy val code: String = "(bvor " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVOr(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -201,7 +194,7 @@ case class BVXor(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] wi
   override lazy val code: String = "(bvxor " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVXor(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -217,7 +210,7 @@ case class BVShiftLeft(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Lo
   override lazy val code: String = "(bvshl " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVShiftLeft(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -230,7 +223,7 @@ case class BVAdd(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] wi
   override lazy val code: String = "(bvadd " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVAdd(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -243,7 +236,7 @@ case class BVSub(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] wi
   override val code: String = "(bvsub " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVSub(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -256,7 +249,7 @@ case class BVSDiv(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] w
   override val code: String = "(bvsdiv " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVSDiv(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -271,7 +264,7 @@ case class BVUDiv(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] w
   override val code: String = "(bvudiv " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVUDiv(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -284,7 +277,7 @@ case class BVMul(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] wi
   override val code: String = "(bvmul " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVMul(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -298,7 +291,7 @@ case class BVShrLogical(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[L
   override lazy val code: String = "(bvlshr " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVShrLogical(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -311,7 +304,7 @@ case class BVShrArithmetic(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNod
   override lazy val code: String = "(bvashr " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVShrArithmetic(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -324,7 +317,7 @@ case class BVEquals(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Boole
   override val code: String = "(= " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new BVEquals(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -338,7 +331,7 @@ case class LAnd(val lhs: BoolNode, val rhs: BoolNode) extends BinaryOpNode[Boole
   override val code: String = "(and " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new LAnd(l.asInstanceOf[BoolNode], r.asInstanceOf[BoolNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BoolNode], rhs.updateValues.asInstanceOf[BoolNode])
 
 }
 
@@ -351,7 +344,7 @@ case class LOr(val lhs: BoolNode, val rhs: BoolNode) extends BinaryOpNode[Boolea
   override val code: String = "(or " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new LOr(l.asInstanceOf[BoolNode], r.asInstanceOf[BoolNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BoolNode], rhs.updateValues.asInstanceOf[BoolNode])
 
 }
 
@@ -364,7 +357,7 @@ case class BVSRem(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] w
   override val code: String = "(bvsrem " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVSRem(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -378,7 +371,7 @@ case class BVURem(val lhs: BVNode, val rhs: BVNode) extends BinaryOpNode[Long] w
   override val code: String = "(bvurem " + lhs.code + " " + rhs.code + ")"
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Long] =
     new BVURem(l.asInstanceOf[BVNode], r.asInstanceOf[BVNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[BVNode], rhs.updateValues.asInstanceOf[BVNode])
 
 }
 
@@ -393,7 +386,7 @@ case class PyLessThanEq(val lhs: PyIntNode, val rhs: PyIntNode) extends BinaryOp
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new PyLessThanEq(l.asInstanceOf[PyIntNode], r.asInstanceOf[PyIntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyIntNode], rhs.updateValues.asInstanceOf[PyIntNode])
 
 }
 
@@ -409,7 +402,7 @@ case class PyGreaterThan(val lhs: PyIntNode, val rhs: PyIntNode) extends BinaryO
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new PyGreaterThan(l.asInstanceOf[PyIntNode], r.asInstanceOf[PyIntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyIntNode], rhs.updateValues.asInstanceOf[PyIntNode])
 
 }
 
@@ -441,7 +434,7 @@ case class PyMapGet(val lhs: MapNode[String,Int], val rhs: PyStringNode) extends
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new PyMapGet(l.asInstanceOf[MapNode[String,Int]], r.asInstanceOf[PyStringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[MapNode[String,Int]], rhs.updateValues.asInstanceOf[PyStringNode])
 
 }
 
@@ -458,7 +451,7 @@ case class PyIntAddition(val lhs: PyIntNode, val rhs: PyIntNode) extends BinaryO
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new PyIntAddition(l.asInstanceOf[PyIntNode], r.asInstanceOf[PyIntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyIntNode], rhs.updateValues.asInstanceOf[PyIntNode])
 
 }
 
@@ -474,7 +467,7 @@ case class PyIntSubtraction(val lhs: PyIntNode, val rhs: PyIntNode) extends Bina
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new PyIntSubtraction(l.asInstanceOf[PyIntNode], r.asInstanceOf[PyIntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyIntNode], rhs.updateValues.asInstanceOf[PyIntNode])
 
 }
 
@@ -493,7 +486,7 @@ case class PyIntDivision(val lhs: PyIntNode, val rhs: PyIntNode) extends BinaryO
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new PyIntDivision(lhs.asInstanceOf[PyIntNode], rhs.asInstanceOf[PyIntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyIntNode], rhs.updateValues.asInstanceOf[PyIntNode])
 
 }
 
@@ -509,7 +502,7 @@ case class PyFind(val lhs: PyStringNode, val rhs: PyStringNode) extends BinaryOp
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new PyFind(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyStringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyStringNode])
 
 }
 
@@ -525,7 +518,7 @@ case class PyContains(val lhs: PyStringNode, val rhs: PyStringNode) extends Bina
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
     new PyContains(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyStringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyStringNode])
 
 }
 
@@ -542,7 +535,7 @@ case class PyStringSplit(val lhs: PyStringNode, val rhs: PyStringNode) extends B
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Iterable[String]] =
     new PyStringSplit(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyStringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyStringNode])
 
 }
 
@@ -558,7 +551,7 @@ case class PyStringJoin(val lhs: PyStringNode, val rhs: ListNode[String]) extend
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[String] =
     new PyStringJoin(l.asInstanceOf[PyStringNode], r.asInstanceOf[ListNode[String]])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[ListNode[String]])
 
 }
 
@@ -587,7 +580,7 @@ case class PyCount(val lhs: PyStringNode, val rhs: PyStringNode) extends BinaryO
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new PyCount(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyStringNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyStringNode])
 
 }
 
@@ -603,9 +596,9 @@ case class PyBinarySubstring(val lhs: PyStringNode, val rhs: PyIntNode) extends 
     case _ => wrongType(l, r)
   }
 
-  override def make(l: ASTNode, r: ASTNode): BinaryOpNode[String] =
-    new PyBinarySubstring(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyIntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def make(l: ASTNode, r: ASTNode): BinaryOpNode[String] = new PyBinarySubstring(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyIntNode])
+
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyIntNode])
 
 }
 
@@ -629,6 +622,6 @@ case class PyStringStep(val lhs: PyStringNode, val rhs: PyIntNode) extends Binar
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[String] =
     new PyStringStep(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyIntNode])
-  override def updateValues() = copy(lhs, rhs)
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyIntNode])
 
 }
