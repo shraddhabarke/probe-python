@@ -95,8 +95,8 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
 
     this.costLevel = costLevel - 1
     this.listIter = programs.filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
-    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
     this.varName = "var"
     this.contexts = contexts
     this.miniBank = miniBank
@@ -242,6 +242,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
         } else {
           this.tempBank.clear()
           Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
+          Contexts.contexts = newContexts
           if (newContexts.length != this.contexts.length)
             this.mainBank.foreach(c => this.tempBank += (c._1 -> c._2.map(d => d.updateValues)))
           else this.tempBank = this.mainBank

@@ -105,15 +105,15 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
                           miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
-    DebugPrints.setInfo()
+    DebugPrints.setNone()
     this.listIter = programs.filter(n => n.nodeType.equals(this.iterableType)).iterator
     /**
      * The outer enumerator bank contains list and dictionary comprehension programs
      * which are not needed here since there is no nested enumeration.
      * Also filter the programs from the bank that do not correspond to the valueType.
      */
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
-    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
     this.costLevel = costLevel - 1
     this.varName = "var"
     this.contexts = contexts
@@ -296,6 +296,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
           this.tempBank.clear()
           Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
+          Contexts.contexts = newContexts
           if (newContexts.length != this.contexts.length)
             this.mainBank.foreach(c => this.tempBank += (c._1 -> c._2.map(d => d.updateValues)))
           else this.tempBank = this.mainBank
@@ -417,8 +418,8 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
     this.keyName = "key"
     this.contexts = contexts
     this.costLevel = if (costLevel == 0) 0 else costLevel - 1   // Non-negative Cost
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.keyName)))).dropRight(1)
-    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.keyName)))).dropRight(1)    // Make sure the name is unique
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)    // Make sure the name is unique
     this.miniBank = miniBank
 
     // TODO We need a nicer way to generate this
@@ -551,6 +552,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
         else {
           this.tempBank.clear()
           Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
+          Contexts.contexts = newContexts
           if (newContexts.length != this.contexts.length)
             this.mainBank.foreach(c => this.tempBank += (c._1 -> c._2.map(d => d.updateValues)))
           else this.tempBank = this.mainBank

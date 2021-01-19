@@ -14,7 +14,6 @@ trait TernaryOpNode[T] extends ASTNode
   val arg0: ASTNode
   val arg1: ASTNode
   val arg2: ASTNode
-  println(arg0.values, arg1.values, arg2.values, Contexts.contextLen)
 
   assert(arg0.values.length == arg1.values.length && arg1.values.length == arg2.values.length)
 
