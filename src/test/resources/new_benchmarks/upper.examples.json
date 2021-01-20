@@ -1,0 +1,11 @@
+{
+  "varName": "rs",
+  "env": [
+    {
+      "#": "",
+      "$": "",
+      "inp": "'coding'",
+      "rs": "{'c': 'CCC', 'o': 'OOO', 'd': 'DDD', 'i': 'III', 'n': 'NNN', 'g': 'GGG'}"
+    }
+  ]
+}

@@ -189,6 +189,17 @@ object PythonPBETask
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntLiteral(-1, contexts.length)
         },
+        new BasicVocabMaker
+        {
+          override val arity: Int = 0
+          override val childTypes: List[Types] = Nil
+          override val returnType: Types = Types.PyInt
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyIntLiteral]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyIntLiteral(3, contexts.length)
+        },
         // Binary Ops
         new BasicVocabMaker
         {
@@ -508,6 +519,28 @@ object PythonPBETask
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntAddition(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
+        },
+        new BasicVocabMaker
+        {
+          override val arity: Int = 2
+          override val childTypes: List[Types] = List(Types.PyInt, Types.PyInt)
+          override val returnType: Types = Types.PyInt
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyIntMultiply]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyIntMultiply(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
+        },
+        new BasicVocabMaker
+        {
+          override val arity: Int = 2
+          override val childTypes: List[Types] = List(Types.PyString, Types.PyInt)
+          override val returnType: Types = Types.PyString
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyStringMultiply]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyStringMultiply(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyIntNode])
         },
         new BasicVocabMaker
         {

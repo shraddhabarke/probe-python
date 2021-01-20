@@ -1,6 +1,6 @@
 package ast
 
-import trace.DebugPrints.{eprintln, iprintln}
+import trace.DebugPrints.{eprintln}
 
 trait BinaryOpNode[T] extends ASTNode{
   val lhs: ASTNode
@@ -454,6 +454,36 @@ case class PyIntAddition(val lhs: PyIntNode, val rhs: PyIntNode) extends BinaryO
 
 }
 
+case class PyIntMultiply(val lhs: PyIntNode, val rhs: PyIntNode) extends BinaryOpNode[Int] with PyIntNode
+{
+  override protected val parenless: Boolean = false
+  override lazy val code: String = lhs.code + " * " + rhs.code
+
+  override def doOp(l: Any, r: Any): Option[Int] = (l, r) match {
+    case (l: Int, r: Int) => Some(l.asInstanceOf[Int] * r.asInstanceOf[Int])
+    case _ => wrongType(l, r)
+  }
+
+  override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
+    new PyIntMultiply(l.asInstanceOf[PyIntNode], r.asInstanceOf[PyIntNode])
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyIntNode], rhs.updateValues.asInstanceOf[PyIntNode])
+}
+
+case class PyStringMultiply(val lhs: PyStringNode, val rhs: PyIntNode) extends BinaryOpNode[String] with PyStringNode
+{
+  override protected val parenless: Boolean = false
+  override lazy val code: String = lhs.code + " * " + rhs.code
+
+  override def doOp(l: Any, r: Any): Option[String] = (l, r) match {
+    case (l: String, r: Int) => Some(l.asInstanceOf[String] * r.asInstanceOf[Int])
+    case _ => wrongType(l, r)
+  }
+
+  override def make(l: ASTNode, r: ASTNode): BinaryOpNode[String] =
+    new PyStringMultiply(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyIntNode])
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyIntNode])
+}
+
 case class PyIntSubtraction(val lhs: PyIntNode, val rhs: PyIntNode) extends BinaryOpNode[Int] with PyIntNode
 {
   override protected val parenless: Boolean = false
@@ -467,7 +497,6 @@ case class PyIntSubtraction(val lhs: PyIntNode, val rhs: PyIntNode) extends Bina
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new PyIntSubtraction(l.asInstanceOf[PyIntNode], r.asInstanceOf[PyIntNode])
   override def updateValues = copy(lhs.updateValues.asInstanceOf[PyIntNode], rhs.updateValues.asInstanceOf[PyIntNode])
-
 }
 
 case class PyIntDivision(val lhs: PyIntNode, val rhs: PyIntNode) extends BinaryOpNode[Int] with PyIntNode
