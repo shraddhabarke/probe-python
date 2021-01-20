@@ -12,6 +12,7 @@ import scala.collection.mutable.ArrayBuffer
 
 abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Boolean) extends VocabMaker with Iterator[ASTNode]
 {
+  DebugPrints.setNone()
 
   var height_log = new FileOutputStream("output-height.txt", true)
   var size_log = new FileOutputStream("output-dict.txt", true)
@@ -89,7 +90,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
       }
     }
 
-    DebugPrints.setInfo()
+    DebugPrints.setNone()
 
     // We don't support nested list comprehensions
     val vocabs = newVarVocab ::
@@ -105,30 +106,20 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
                           miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
-    DebugPrints.setNone()
+    DebugPrints.setInfo()
     this.listIter = programs.filter(n => n.nodeType.equals(this.iterableType)).iterator
     /**
      * The outer enumerator bank contains list and dictionary comprehension programs
      * which are not needed here since there is no nested enumeration.
      * Also filter the programs from the bank that do not correspond to the valueType.
      */
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
-    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
     this.costLevel = costLevel - 1
     this.varName = "var"
     this.contexts = contexts
     this.miniBank = miniBank
     this.nestedCost = 0
-
-    Console.withOut(size_log) {
-      iprintln(" ")
-      iprintln("Iterator:", programs.filter(n => n.nodeType.equals(this.iterableType) && !n.includes(this.varName)).map(c => c.code))
-      iprintln("MiniBank from outer enumerator:", this.miniBank.values.map(c => c.toList.map(d => (d.code))))
-      iprintln("Bank1:", this.tempBank.values.map(c => c.toList.map(d => (d.code))))
-      iprintln("CostLevel:", costLevel)
-
-      iprintln(" ")
-    }
     // Make sure the name is unique
     // TODO We need a nicer way to generate this
     while (contexts.head.contains(this.varName)) this.varName = "_" + this.varName
@@ -257,9 +248,9 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
         updateMiniBank((this.nodeType, this.currList), value)       // TODO: update miniBank with only variable programs
 
-        //Console.withOut(size_log) {
-          //iprintln("Updating Mini Bank,", this.currList.code, value.code)
-        //}
+        Console.withOut(size_log) {
+          //println("Updating Mini Bank,", this.currList.code, value.code)
+        }
 
         // next is a valid program
         val node = this.makeNode(
@@ -267,10 +258,6 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
           new PyStringVariable(varName, this.enumerator.asInstanceOf[PyProbEnumerator].contexts),
           value)
         this.nextProg = Some(node)
-
-        Console.withOut(size_log) {
-          iprintln("Valid Program,", this.nextProg.get.code, value.code)
-        }
 
       }
     }
@@ -304,18 +291,20 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
           Console.withOut(size_log) {
             iprintln("------------------------------------------------------------------------------------------------------")
             iprintln("MapCompVocabMaker", this.nodeType, this.currList.code, this.currList.cost)
-            iprintln("CostLevel = %s".format(this.costLevel + 1)) }
+            iprintln("CostLevel = %s".format(this.costLevel + 1))}
 
-         // if(miniBank.contains(this.currList)) {
-           // updateMainBank(this.miniBank(this.currList))
-            //this.nestedCost = this.miniBank(this.currList).last.cost
-          //}
+          if (this.miniBank.contains((this.nodeType, this.currList))) {
+            this.nestedCost = this.miniBank((this.nodeType, this.currList)).last.cost
+            updateMainBank(this.miniBank((this.nodeType, this.currList)))
+          } else this.nestedCost = 0
+
           // TODO: add the programs from the miniBank to the main bank; pass the updated bank as parameter to the new enumerator object
 
           Console.withOut(size_log) {
             if (this.miniBank.contains((this.nodeType, this.currList)))
               iprintln("Mini Bank:", this.currList.code, this.miniBank(this.nodeType, this.currList).map(c => c.code))
               iprintln("Bank2:", this.tempBank.values.map(c => c.toList.map(d => (d.code))))
+              iprintln("Nested Cost:", this.nestedCost)
               iprintln(" ")
           }
 

@@ -20,7 +20,7 @@ object Main extends App {
   //"src/test/resources/old_benchmarks/rotate.examples.json"
   //"src/test/resources/benchmarks/abbreviate_2_ex.examples.json"
   //"src/test/resources/old_benchmarks/filter_map.examples.json"
-  "src/test/resources/benchmarks/empty_map.examples.json"
+  "src/test/resources/old_benchmarks/get_middle.examples.json"
   //"src/test/resources/benchmarks/abbreviate_4_ex.examples.json"
   //"src/test/resources/old_benchmarks/string_length.examples.json"
   //"src/test/resources/old_benchmarks/vowel_count.examples.json"

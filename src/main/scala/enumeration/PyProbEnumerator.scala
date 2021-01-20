@@ -52,8 +52,6 @@ class PyProbEnumerator(val vocab: VocabFactory,
   bank.values.flatten.toList.foreach(p => oeManager.isRepresentative(p)) // does this take care of OE?
   DebugPrints.iprintln()
 
-  nested = false  // Reset nested flag
-
   var rootMaker: Iterator[ASTNode] = currIterator.next().
     probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank)
 

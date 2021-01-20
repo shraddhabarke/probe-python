@@ -22,6 +22,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
   var listIter: Iterator[ASTNode] = _
   var mapVocab: VocabFactory = _
   var contexts: List[Map[String, Any]] = _
+  var nestedCost: Int = _
 
   var costLevel: Int = _
   var enumerator: Iterator[ASTNode] = _
@@ -95,8 +96,8 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
 
     this.costLevel = costLevel - 1
     this.listIter = programs.filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
-    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.usesVariables))).dropRight(1)
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
     this.varName = "var"
     this.contexts = contexts
     this.miniBank = miniBank
@@ -197,7 +198,8 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
         }
       } else if (next.nodeType.eq(this.outputListType) && next.includes(this.varName)) {
 
-        updateMiniBank((this.nodeType, this.currList), next) // update miniBanks
+        //updateMiniBank((this.nodeType, this.currList), next)  // TODO: Check this!
+
         // next is a valid program
         val node = this.makeNode(this.currList, next)
         this.nextProg = Some(node)
@@ -243,11 +245,17 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
           this.tempBank.clear()
           Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
           Contexts.contexts = newContexts
+
           if (newContexts.length != this.contexts.length)
             this.mainBank.foreach(c => this.tempBank += (c._1 -> c._2.map(d => d.updateValues)))
           else this.tempBank = this.mainBank
 
-          new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false, true, 0, this.tempBank)
+          if (this.miniBank.contains((this.nodeType, this.currList))) {
+            this.nestedCost = this.miniBank((this.nodeType, this.currList)).last.cost
+            updateMainBank(this.miniBank((this.nodeType, this.currList)))
+          } else this.nestedCost = 0
+
+          new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false, true, this.nestedCost, this.tempBank)
         }
         done = true
       }
