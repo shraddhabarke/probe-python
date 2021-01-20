@@ -186,6 +186,22 @@ case class PyStringLower(val arg: PyStringNode) extends UnaryOpNode[String] with
 
 }
 
+case class PyStringUpper(val arg: PyStringNode) extends UnaryOpNode[String] with PyStringNode
+{
+  override protected val parenless: Boolean = true
+  override lazy val code: String = arg.parensIfNeeded + ".upper()"
+
+  override def doOp(x: Any): Option[String] = x match {
+    case x: String => Some(x.toUpperCase)
+    case _ => wrongType(x)
+  }
+
+  override def make(x: ASTNode): UnaryOpNode[String] =
+    new PyStringUpper(x.asInstanceOf[PyStringNode])
+  override def updateValues = copy(arg.updateValues.asInstanceOf[PyStringNode])
+
+}
+
 case class PyMax(val arg: ListNode[Int]) extends UnaryOpNode[Int] with PyIntNode {
   override protected val parenless: Boolean = true
   override lazy val code: String = "max(" + arg.code + ")"

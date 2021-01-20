@@ -326,6 +326,17 @@ object PythonPBETask
         {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.PyString)
+          override val returnType: Types = Types.PyString
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyStringUpper]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyStringUpper(children.head.asInstanceOf[PyStringNode])
+        },
+        new BasicVocabMaker
+        {
+          override val arity: Int = 1
+          override val childTypes: List[Types] = List(Types.PyString)
           override val returnType: Types = Types.PyInt
           override val nodeType: Class[_ <: ASTNode] = classOf[PyStringToInt]
           override val head: String = ""

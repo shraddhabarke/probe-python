@@ -1,5 +1,4 @@
 import ast._
-import jdk.nashorn.internal.runtime.BitVector
 import org.junit.Test
 import org.scalatestplus.junit.JUnitSuite
 import org.junit.Assert._
