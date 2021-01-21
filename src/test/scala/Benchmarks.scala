@@ -10,7 +10,7 @@ object Benchmarks extends App
       "-------------------------------------------\n")
   println("Index Name                 Program")
 
-  val benchmarks = new File("src/test/resources")
+  val benchmarks = new File("src/test/resources/")
   assert(benchmarks.isDirectory)
 
   benchmarks.listFiles().filter(_.isDirectory).foreach(
