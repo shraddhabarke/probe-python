@@ -291,6 +291,28 @@ object PythonPBETask
         },
         new BasicVocabMaker
         {
+          override val arity: Int = 2
+          override val childTypes: List[Types] = List(Types.PyString, Types.PyString)
+          override val returnType: Types = Types.PyBool
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyStartsWith]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyStartsWith(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyStringNode])
+        },
+        new BasicVocabMaker
+        {
+          override val arity: Int = 2
+          override val childTypes: List[Types] = List(Types.PyString, Types.PyString)
+          override val returnType: Types = Types.PyBool
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyEndsWith]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyEndsWith(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyStringNode])
+        },
+        new BasicVocabMaker
+        {
           override val arity: Int = 1
           override val childTypes: List[Types] = List(Types.Iterable(Types.Any))
           override val returnType: Types = Types.PyInt
@@ -322,6 +344,31 @@ object PythonPBETask
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyMax(children.head.asInstanceOf[ListNode[Int]])
         },
+
+        new BasicVocabMaker
+        {
+          override val arity: Int = 1
+          override val childTypes: List[Types] = List(Types.String)
+          override val returnType: Types = Types.PyBool
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyIsAlpha]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyIsAlpha(children.head.asInstanceOf[PyStringNode])
+        },
+
+        new BasicVocabMaker
+        {
+          override val arity: Int = 1
+          override val childTypes: List[Types] = List(Types.String)
+          override val returnType: Types = Types.PyBool
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyIsNumeric]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyIsNumeric(children.head.asInstanceOf[PyStringNode])
+        },
+
         new BasicVocabMaker
         {
           override val arity: Int = 1

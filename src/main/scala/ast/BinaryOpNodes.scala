@@ -630,6 +630,34 @@ case class PyBinarySubstring(val lhs: PyStringNode, val rhs: PyIntNode) extends 
 
 }
 
+case class PyStartsWith(val lhs: PyStringNode, val rhs: PyStringNode) extends BinaryOpNode[Boolean] with PyBoolNode {
+  override protected val parenless: Boolean = true
+  override lazy val code: String = lhs.code + ".startswith(" + rhs.code + ")"
+  override def doOp(l: Any, r: Any): Option[Boolean] = (l, r) match {
+    case (l: String, r: String) =>  Some(l.asInstanceOf[String].startsWith(r.asInstanceOf[String]))
+    case _ => wrongType(l, r)
+  }
+
+  override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
+    new PyStartsWith(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyStringNode])
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyStringNode])
+
+}
+
+case class PyEndsWith(val lhs: PyStringNode, val rhs: PyStringNode) extends BinaryOpNode[Boolean] with PyBoolNode {
+  override protected val parenless: Boolean = true
+  override lazy val code: String = lhs.code + ".endswith(" + rhs.code + ")"
+  override def doOp(l: Any, r: Any): Option[Boolean] = (l, r) match {
+    case (l: String, r: String) =>  Some(l.asInstanceOf[String].endsWith(r.asInstanceOf[String]))
+    case _ => wrongType(l, r)
+  }
+
+  override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Boolean] =
+    new PyEndsWith(l.asInstanceOf[PyStringNode], r.asInstanceOf[PyStringNode])
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[PyStringNode], rhs.updateValues.asInstanceOf[PyStringNode])
+}
+
+
 case class PyStringStep(val lhs: PyStringNode, val rhs: PyIntNode) extends BinaryOpNode[String] with PyStringNode
 {
   override protected val parenless: Boolean = true

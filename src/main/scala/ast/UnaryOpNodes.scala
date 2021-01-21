@@ -230,6 +230,34 @@ case class PyMin(val arg: ListNode[Int]) extends UnaryOpNode[Int] with PyIntNode
 
 }
 
+case class PyIsAlpha(val arg: PyStringNode) extends UnaryOpNode[Boolean] with BoolNode {
+  override protected val parenless: Boolean = true
+  override lazy val code: String = arg.parensIfNeeded + ".isalpha()"
+  override def doOp(x: Any): Option[Boolean] = x match {
+    case arg: String => Some(arg.matches("[a-zA-Z]+"))
+    case _ => wrongType(x)
+  }
+
+  override def make(x: ASTNode): UnaryOpNode[Boolean] =
+    new PyIsAlpha(x.asInstanceOf[PyStringNode])
+  override def updateValues = copy(arg.updateValues.asInstanceOf[PyStringNode])
+
+}
+
+case class PyIsNumeric(val arg: PyStringNode) extends UnaryOpNode[Boolean] with BoolNode {
+  override protected val parenless: Boolean = true
+  override lazy val code: String = arg.parensIfNeeded + ".isnumeric()"
+  override def doOp(x: Any): Option[Boolean] = x match {
+    case arg: String => Some(arg.forall(_.isDigit))
+    case _ => wrongType(x)
+  }
+
+  override def make(x: ASTNode): UnaryOpNode[Boolean] =
+    new PyIsNumeric(x.asInstanceOf[PyStringNode])
+  override def updateValues = copy(arg.updateValues.asInstanceOf[PyStringNode])
+
+}
+
 case class PySortedStringList(val arg: ListNode[String]) extends UnaryOpNode[Iterable[String]] with StringListNode {
   override protected val parenless: Boolean = true
   override lazy val code: String = "sorted(" + arg.code + ")"
