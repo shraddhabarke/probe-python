@@ -3,10 +3,9 @@ import org.junit.Test
 import org.scalatestplus.junit.JUnitSuite
 import org.junit.Assert._
 
-class PyASTNodeTests extends JUnitSuite
-{
-  @Test def stringLiteralNode(): Unit =
-  {
+class PyASTNodeTests extends JUnitSuite {
+
+  @Test def stringLiteralNode(): Unit = {
     val literal: PyStringLiteral = new PyStringLiteral("abc", 1)
     assertEquals(1, literal.values.length)
     assertEquals("abc", literal.values.head)
@@ -18,14 +17,13 @@ class PyASTNodeTests extends JUnitSuite
   }
 
   @Test def stringLiteralEscaping(): Unit = {
-    assertEquals("\"a\\tb\\r\\n\"", new PyStringLiteral("a\tb\r\n",1).code)
-    assertEquals("\"a\\\\tb\\\\r\\\\n\"", new PyStringLiteral("a\\tb\\r\\n",1).code)
-    assertEquals("\"a\\\"b\\\"c\"",new PyStringLiteral("a\"b\"c",1).code)
-    assertEquals("\"\\xd83d\\xdca9\"",new PyStringLiteral("\uD83D\uDCA9",1).code)
+    assertEquals("\"a\\tb\\r\\n\"", new PyStringLiteral("a\tb\r\n", 1).code)
+    assertEquals("\"a\\\\tb\\\\r\\\\n\"", new PyStringLiteral("a\\tb\\r\\n", 1).code)
+    assertEquals("\"a\\\"b\\\"c\"", new PyStringLiteral("a\"b\"c", 1).code)
+    assertEquals("\"\\xd83d\\xdca9\"", new PyStringLiteral("\uD83D\uDCA9", 1).code)
   }
 
-  @Test def intLiteralNode(): Unit =
-  {
+  @Test def intLiteralNode(): Unit = {
     val literal: PyIntLiteral = new PyIntLiteral(42, 2)
     assertEquals(2, literal.values.length)
     assertEquals(42, literal.values.head)
@@ -36,8 +34,7 @@ class PyASTNodeTests extends JUnitSuite
     assertTrue(literal.children.isEmpty)
   }
 
-  @Test def boolLiteralNode(): Unit =
-  {
+  @Test def boolLiteralNode(): Unit = {
     var literal: PyBoolLiteral = new PyBoolLiteral(false, 3)
     assertEquals(3, literal.values.length)
     assertEquals(false, literal.values.head)
@@ -57,8 +54,7 @@ class PyASTNodeTests extends JUnitSuite
     assertTrue(literal.children.isEmpty)
   }
 
-  @Test def intToStringNode(): Unit =
-  {
+  @Test def intToStringNode(): Unit = {
     val node: PyIntToString = new PyIntToString(new PyIntLiteral(83, 1))
     assertEquals(1, node.values.length)
     assertEquals("83", node.values.head)
@@ -69,8 +65,7 @@ class PyASTNodeTests extends JUnitSuite
     assertEquals(node.children.size, 1)
   }
 
-  @Test def stringToIntNode(): Unit =
-  {
+  @Test def stringToIntNode(): Unit = {
     val node: PyStringToInt = new PyStringToInt(new PyStringLiteral("83", 1))
     assertEquals(1, node.values.length)
     assertEquals(83, node.values.head)
@@ -81,8 +76,7 @@ class PyASTNodeTests extends JUnitSuite
     assertEquals(node.children.size, 1)
   }
 
-  @Test def stringLowerNode(): Unit =
-  {
+  @Test def stringLowerNode(): Unit = {
     var node: PyStringLower = new PyStringLower(new PyStringLiteral("aBC", 1))
     assertEquals(1, node.values.length)
     assertEquals("abc", node.values.head)
@@ -104,6 +98,65 @@ class PyASTNodeTests extends JUnitSuite
     assertEquals(node.children.size, 1)
   }
 
+  @Test def intMultiplication(): Unit = {
+    val multiplyNumbers = new PyIntMultiply(new
+        PyIntMultiply(new PyIntLiteral(1, 1),
+          new PyIntLiteral(2, 1)),
+      new PyIntMultiply(new PyIntLiteral(3, 1),
+        new PyIntLiteral(4, 1)))
+    assertEquals("1 * 2 * 3 * 4", multiplyNumbers.code)
+    assertEquals(24, multiplyNumbers.values.head)
+  }
+
+  @Test def stringMultiplication(): Unit = {
+    val multiply = new PyStringMultiply(
+      new PyStringLiteral("a", 1),
+      new PyIntLiteral(3, 1))
+    assertEquals("\"a\" * 3", multiply.code)
+    assertEquals("aaa", multiply.values.head)
+  }
+
+  @Test def alpha(): Unit = {
+    val isAlpha1 = new PyIsAlpha(new PyStringLiteral("abc", 1))
+    val isAlpha2 = new PyIsAlpha(new PyStringLiteral("a123", 1))
+    val isAlpha3 = new PyIsAlpha(new PyStringLiteral("a ", 1))
+    val isAlpha4 = new PyIsAlpha(new PyStringLiteral("a%*", 1))
+    assertEquals(true, isAlpha1.values.head)
+    assertEquals(false, isAlpha2.values.head)
+    assertEquals(false, isAlpha3.values.head)
+    assertEquals(false, isAlpha4.values.head)
+  }
+
+  @Test def numeric(): Unit = {
+    val isNumeric1 = new PyIsNumeric(new PyStringLiteral("abc123", 1))
+    val isNumeric2 = new PyIsNumeric(new PyStringLiteral("123", 1))
+    val isNumeric3 = new PyIsNumeric(new PyStringLiteral("123 ", 1))
+    val isNumeric4 = new PyIsNumeric(new PyStringLiteral("123%*", 1))
+    assertEquals(false, isNumeric1.values.head)
+    assertEquals("\"abc123\".isnumeric()", isNumeric1.code)
+    assertEquals(true, isNumeric2.values.head)
+    assertEquals(false, isNumeric3.values.head)
+    assertEquals(false, isNumeric4.values.head)
+  }
+
+  @Test def startsWith(): Unit = {
+    val StartsWith1 = new PyStartsWith(new PyStringLiteral("abc123", 1),
+      new PyStringLiteral("abc", 1))
+    val StartsWith2 = new PyStartsWith(new PyStringLiteral("123", 1),
+      new PyStringLiteral("23", 1))
+    val EndsWith1 = new PyEndsWith(new PyStringLiteral("abc123", 1),
+      new PyStringLiteral("123", 1))
+    val EndsWith2 = new PyEndsWith(new PyStringLiteral("123", 1),
+      new PyStringLiteral("3", 1))
+    assertEquals(true, StartsWith1.values.head)
+    assertEquals("\"abc123\".startswith(\"abc\")", StartsWith1.code)
+    assertEquals(false, StartsWith2.values.head)
+    assertEquals("\"abc123\".endswith(\"123\")", EndsWith1.code)
+    assertEquals(true, EndsWith1.values.head)
+    assertEquals(true, EndsWith2.values.head)
+
+  }
+
   @Test def maxNode(): Unit =
   {
     val node: PyMax = new PyMax(new IntListNode {
@@ -116,6 +169,7 @@ class PyASTNodeTests extends JUnitSuite
 
       override def includes(varName: String): Boolean = false
       override lazy val usesVariables: Boolean = false
+      override def updateValues: ASTNode = null
     })
     assertEquals(1, node.values.length)
     assertEquals(2, node.values.head)
@@ -138,6 +192,8 @@ class PyASTNodeTests extends JUnitSuite
 
       override def includes(varName: String): Boolean = false
       override lazy val usesVariables: Boolean = false
+      override def updateValues: ASTNode = null
+
     })
     assertEquals(1, node.values.length)
     assertEquals(-1123, node.values.head)

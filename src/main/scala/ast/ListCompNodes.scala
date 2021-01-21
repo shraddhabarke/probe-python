@@ -26,7 +26,7 @@ trait ListCompNode[T] extends ListNode[T]
   override def includes(varName: String): Boolean =
     varName.equals(this.varName) || list.includes(varName) || map.includes(varName)
   override lazy val usesVariables: Boolean = list.usesVariables || map.usesVariables
-  override def updateValues = ???
+  override def updateValues: ASTNode = null
 
 }
 

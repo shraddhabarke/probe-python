@@ -40,7 +40,7 @@ trait QuaternaryOpNode[T] extends ASTNode
     arg0.usesVariables || arg1.usesVariables ||
       arg2.usesVariables || arg3.usesVariables
 
-  override def updateValues = ???
+  override def updateValues = null
 
 }
 
