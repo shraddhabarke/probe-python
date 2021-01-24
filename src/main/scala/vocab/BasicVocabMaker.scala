@@ -4,6 +4,7 @@ import ast.Types.Types
 import ast.{ASTNode, BVLiteral, BVVariable, BoolLiteral, BoolVariable, IntLiteral, IntVariable, PyBoolLiteral, PyBoolVariable, PyIntLiteral, PyIntVariable, PyStringLiteral, PyStringVariable, StringLiteral, StringVariable}
 import enumeration.{ChildrenIterator, ProbChildrenIterator, ProbUpdate}
 
+import java.io.FileOutputStream
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 
@@ -44,17 +45,16 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
                   contexts: List[Map[String, Any]],
                   bank: mutable.Map[Int, ArrayBuffer[ASTNode]],
                   nested: Boolean,
-                  miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
+                  miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]]) : Iterator[ASTNode] = {
      this.contexts = contexts
      this.childIterator = if (this.arity == 0 && this.rootCost == costLevel) {
       // No children needed, but we still return 1 value
       Iterator.single(Nil)
-    } else if (this.rootCost < costLevel) {
+    } else if (this.rootCost < costLevel) { //TODO: add condition (arity != 0)
       val childrenCost = costLevel - this.rootCost
       val children = new ProbChildrenIterator(this.childTypes, childrenCost, bank)
-      //if ((children.flatten.toList.exists(c => c.usesVariables == true) && nested) || !nested)
-      //else Iterator.empty }
-      children }
+       children
+     }
     else {
       Iterator.empty
     }

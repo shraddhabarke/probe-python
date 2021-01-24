@@ -15,6 +15,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
   DebugPrints.setNone()
 
   var height_log = new FileOutputStream("output-height.txt", true)
+  var size_log = new FileOutputStream("output.txt", true)
 
   override val arity: Int = 2
   def apply(children: List[ASTNode], contexts: List[Map[String,Any]]): ASTNode = null
@@ -30,7 +31,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
   var childHeight: Int = _
   var varName: String = _
   var nextProg: Option[ASTNode] = None
-  var miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]] = _
+  var miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]] = _
   var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
 
@@ -81,7 +82,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
     // We don't support nested list comprehensions
     val vocabs = newVarVocab ::
       vocabFactory.leavesMakers :::
-      vocabFactory.nodeMakers.filter(_.isInstanceOf[BasicVocabMaker])
+      vocabFactory.nodeMakers.filter(c => c.isInstanceOf[BasicVocabMaker])
 
     this.mapVocab = VocabFactory.apply(vocabs)
     this.nextList()
@@ -92,12 +93,12 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
                           costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
-                          miniBank: mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
+                          miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]]) : Iterator[ASTNode] = {
 
     this.costLevel = costLevel - 1
     this.listIter = programs.filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
-    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName)))).dropRight(1)
+    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
     this.varName = "var"
     this.contexts = contexts
     this.miniBank = miniBank
@@ -198,7 +199,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
         }
       } else if (next.nodeType.eq(this.outputListType) && next.includes(this.varName)) {
 
-        //updateMiniBank((this.nodeType, this.currList), next)  // TODO: Check this!
+        updateMiniBank((this.nodeType, this.currList), next)  // TODO: Check this!
 
         // next is a valid program
         val node = this.makeNode(this.currList, next)
@@ -209,17 +210,15 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
 
   private def updateMiniBank(key: (Class[_], ASTNode), value: ASTNode): Unit = {
     if (!this.miniBank.contains(key))
-      this.miniBank(key) = ArrayBuffer(value)
+      this.miniBank(key) = mutable.Map(value.cost -> ArrayBuffer(value))
+    else if (!this.miniBank(key).contains(value.cost))
+      this.miniBank(key)(value.cost) = ArrayBuffer(value)
     else
-      this.miniBank(key) += value
+      this.miniBank(key)(value.cost) += value
   }
 
-  private def updateMainBank(values: ArrayBuffer[ASTNode]): Unit = {
-    values.map(c =>
-      if (!this.tempBank.contains(c.cost))
-        this.tempBank(c.cost) = ArrayBuffer(c)
-      else
-        this.tempBank(c.cost) += c)
+  private def updateMainBank(mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]): Unit = {
+    this.tempBank ++ mini.map{ case (k,v) => k -> (v :+ this.tempBank.getOrElse(k,0)) }
   }
 
   private def nextList() : Boolean =
@@ -242,18 +241,28 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
             iprintln("=====Creating Nested Enumerator====") }
           new PyEnumerator(this.mapVocab, oeValuesManager, newContexts)
         } else {
-          this.tempBank.clear()
+
           Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
           Contexts.contexts = newContexts
-
-          if (newContexts.length != this.contexts.length)
-            this.mainBank.foreach(c => this.tempBank += (c._1 -> c._2.map(d => d.updateValues)))
-          else this.tempBank = this.mainBank
+          val bankCost = this.costLevel - this.currList.cost
+          this.tempBank = this.tempBank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
+          this.tempBank = this.tempBank.take(bankCost).map(c => c._1 -> c._2.map(d => d.updateValues)) //TODO: Optimize
 
           if (this.miniBank.contains((this.nodeType, this.currList))) {
-            this.nestedCost = this.miniBank((this.nodeType, this.currList)).last.cost
-            updateMainBank(this.miniBank((this.nodeType, this.currList)))
+            this.nestedCost = this.miniBank((this.nodeType, this.currList)).keys.last
+            val mini = this.miniBank((this.nodeType, this.currList)).take(bankCost)
+            //.map(c => c._1 -> c._2.map(d => d.updateValues))
+            updateMainBank(mini)
           } else this.nestedCost = 0
+
+          Console.withOut(size_log) {
+            println("------------------------------------------------------------------------------------------------------------")
+            println("ListCompVocabMaker", this.nodeType, this.currList.code, this.currList.cost)
+            println("CostLevel = %s".format(this.costLevel + 1))
+            println("miniBank", this.miniBank.values.flatten.map(c => c._2.map(d => (d.code, d.cost))))
+            println("bank", this.tempBank.values.flatten.map(c => (c.code,c.values.length)))
+            println(" ")
+          }
 
           new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false, true, this.nestedCost, this.tempBank)
         }
