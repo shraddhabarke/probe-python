@@ -199,8 +199,7 @@ object PythonPBETask
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntLiteral(3, contexts.length)
-        },
-        // Binary Ops
+        },        // Binary Ops
         new BasicVocabMaker
         {
           override val arity: Int = 2
@@ -348,7 +347,7 @@ object PythonPBETask
         new BasicVocabMaker
         {
           override val arity: Int = 1
-          override val childTypes: List[Types] = List(Types.String)
+          override val childTypes: List[Types] = List(Types.PyString)
           override val returnType: Types = Types.PyBool
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIsAlpha]
           override val head: String = ""
@@ -360,7 +359,7 @@ object PythonPBETask
         new BasicVocabMaker
         {
           override val arity: Int = 1
-          override val childTypes: List[Types] = List(Types.String)
+          override val childTypes: List[Types] = List(Types.PyString)
           override val returnType: Types = Types.PyBool
           override val nodeType: Class[_ <: ASTNode] = classOf[PyIsNumeric]
           override val head: String = ""
@@ -577,17 +576,6 @@ object PythonPBETask
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntMultiply(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
-        },
-        new BasicVocabMaker
-        {
-          override val arity: Int = 2
-          override val childTypes: List[Types] = List(Types.PyString, Types.PyInt)
-          override val returnType: Types = Types.PyString
-          override val nodeType: Class[_ <: ASTNode] = classOf[PyStringMultiply]
-          override val head: String = ""
-
-          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
-            new PyStringMultiply(children.head.asInstanceOf[PyStringNode], children(1).asInstanceOf[PyIntNode])
         },
         new BasicVocabMaker
         {

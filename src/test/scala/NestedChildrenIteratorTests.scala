@@ -1,6 +1,6 @@
 import ast.Types.String
 import ast.{ASTNode, IntAddition, IntLiteral, IntNode, IntVariable, PyIntLiteral, PyStringLiteral, PyStringVariable, Types}
-import enumeration.{ChildrenIterator, NestedChildrenIterator, ProbChildrenIterator}
+import enumeration.{ChildrenIterator, Contexts, NestedChildrenIterator, ProbChildrenIterator}
 import org.junit.Test
 import org.scalatestplus.junit.JUnitSuite
 import org.junit.Assert._
@@ -29,8 +29,9 @@ class NestedChildrenIteratorsTests extends JUnitSuite {
   @Test def nestedIterator2(): Unit = {
     var main = mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]()
     var mini = mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]()
-    main += (1 -> ArrayBuffer(new PyStringLiteral("s", 2),
-      new PyIntLiteral(0, 2)))
+    Contexts.contextLen = 3
+    main += (1 -> ArrayBuffer(new PyStringLiteral("s", 3),
+      new PyIntLiteral(0, 3)))
     mini += (1 -> ArrayBuffer(PyStringVariable("name", List(Map("name" -> "SL"),
       Map("name" -> "N"), Map("name" -> "SB"))),
       PyStringVariable("var", List(Map("var" -> "SL"),

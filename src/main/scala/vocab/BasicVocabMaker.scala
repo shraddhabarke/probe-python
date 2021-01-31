@@ -1,8 +1,8 @@
 package vocab
 
 import ast.Types.Types
-import ast.{ASTNode, BVLiteral, BVVariable, BoolLiteral, BoolVariable, IntLiteral, IntVariable, PyBoolLiteral, PyBoolVariable, PyIntLiteral, PyIntVariable, PyStringLiteral, PyStringVariable, StringLiteral, StringVariable}
-import enumeration.{ChildrenIterator, ProbChildrenIterator, ProbUpdate}
+import ast.{ASTNode, BVLiteral, BVVariable, BoolLiteral, BoolVariable, IntLiteral, IntVariable, StringLiteral, StringVariable}
+import enumeration.{ChildrenIterator, NestedChildrenIterator, ProbChildrenIterator, ProbUpdate}
 
 import java.io.FileOutputStream
 import scala.collection.mutable
@@ -12,6 +12,7 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
   val returnType: Types
   var childIterator: Iterator[List[ASTNode]] = _
   var contexts: List[Map[String, Any]] = _
+  var size_log = new FileOutputStream("output.txt", true)
 
   override def hasNext: Boolean = childIterator != null && childIterator.hasNext
   def apply(children: List[ASTNode], contexts: List[Map[String,Any]]): ASTNode
@@ -45,14 +46,25 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
                   contexts: List[Map[String, Any]],
                   bank: mutable.Map[Int, ArrayBuffer[ASTNode]],
                   nested: Boolean,
-                  miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]]) : Iterator[ASTNode] = {
+                  miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]],
+                  mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
+
      this.contexts = contexts
      this.childIterator = if (this.arity == 0 && this.rootCost == costLevel) {
-      // No children needed, but we still return 1 value
-      Iterator.single(Nil)
-    } else if (this.rootCost < costLevel) { //TODO: add condition (arity != 0)
-      val childrenCost = costLevel - this.rootCost
-      val children = new ProbChildrenIterator(this.childTypes, childrenCost, bank)
+       // No children needed, but we still return 1 value
+       Iterator.single(Nil)
+     }
+     else if (mini == null && nested) {
+       Iterator.empty
+     }
+     else if (this.rootCost < costLevel && !nested) { //TODO: add condition (arity != 0)
+       val childrenCost = costLevel - this.rootCost
+       val children = new ProbChildrenIterator(this.childTypes, childrenCost, bank)
+       children
+     }
+     else if (this.rootCost < costLevel && nested) { //TODO: add condition (arity != 0)
+       val childrenCost = costLevel - this.rootCost
+       val children = new NestedChildrenIterator(this.childTypes, childrenCost, bank, mini)
        children
      }
     else {

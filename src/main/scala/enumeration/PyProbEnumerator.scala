@@ -1,9 +1,7 @@
 package enumeration
 
 import java.io.FileOutputStream
-import ast.ASTNode
-import trace.DebugPrints
-import trace.DebugPrints.iprintln
+import ast.{ASTNode, IntIntFilteredMapNode, IntIntMapCompNode, IntStringFilteredMapNode, IntStringMapCompNode, IntToIntListCompNode, IntToStringListCompNode, PyMapGet, StringIntFilteredMapNode, StringIntMapCompNode, StringListIntMapCompNode, StringListStringMapCompNode, StringStringFilteredMapNode, StringStringMapCompNode, StringToIntListCompNode, StringToStringListCompNode}
 import vocab.{VocabFactory, VocabMaker}
 
 import scala.collection.mutable
@@ -14,7 +12,8 @@ class PyProbEnumerator(val vocab: VocabFactory,
                        val contexts: List[Map[String,Any]],
                        val probBased: Boolean, var nested: Boolean,
                        var initCost: Int,
-                       var bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) extends Iterator[ASTNode] {
+                       var bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
+                       var mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) extends Iterator[ASTNode] {
 
   override def toString(): String = "enumeration.Enumerator"
   var nextProgram: Option[ASTNode] = None
@@ -36,29 +35,28 @@ class PyProbEnumerator(val vocab: VocabFactory,
     res
   }
 
-  DebugPrints.setNone()
   var costLevel = initCost
   var currIterator: Iterator[VocabMaker] = _
   var currLevelPrograms: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
-  var miniBank = mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]()
-  var size_log = new FileOutputStream("output-dict.txt", true)
+  var miniBank = mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]]()
   val totalLeaves = vocab.leaves().toList.distinct ++ vocab.nonLeaves().toList.distinct
+  var size_log = new FileOutputStream("output.txt", true)
+
   ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)
   ProbUpdate.priors = ProbUpdate.createPyPrior(vocab)
   resetEnumeration()
-
   Contexts.contextLen = this.contexts.length
   Contexts.contexts = this.contexts
   bank.values.flatten.toList.foreach(p => oeManager.isRepresentative(p)) // does this take care of OE?
-  DebugPrints.iprintln()
+
+  def currentCost: Int = costLevel
 
   var rootMaker: Iterator[ASTNode] = currIterator.next().
-    probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank)
-
+    probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank, mini)
 
   def resetEnumeration(): Unit = {
     currIterator = totalLeaves.sortBy(_.rootCost).iterator
-    rootMaker = currIterator.next().probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank)
+    rootMaker = currIterator.next().probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank, mini)
     currLevelPrograms.clear()
     oeManager.clear()
   }
@@ -72,14 +70,23 @@ class PyProbEnumerator(val vocab: VocabFactory,
   def advanceRoot(): Boolean = {
     rootMaker = null
     while (rootMaker == null || !rootMaker.hasNext) {
-      if (!currIterator.hasNext) return false
+      if (!currIterator.hasNext) { return false }
       val next = currIterator.next()
-      rootMaker = next.probe_init(bank.values.flatten.toList, vocab, costLevel, contexts, bank, nested, miniBank)
+      rootMaker = next.probe_init(bank.values.flatten.toList, vocab, costLevel, contexts, bank, nested, miniBank, mini)
+      if ((next.nodeType == classOf[StringToStringListCompNode]) || (next.nodeType == classOf[StringToIntListCompNode])
+      || (next.nodeType == classOf[IntToStringListCompNode]) || (next.nodeType == classOf[IntToIntListCompNode])
+      || (next.nodeType == classOf[StringStringMapCompNode]) || (next.nodeType == classOf[StringIntMapCompNode])
+      || (next.nodeType == classOf[StringListStringMapCompNode]) || (next.nodeType == classOf[StringListIntMapCompNode])
+      || (next.nodeType == classOf[IntStringMapCompNode]) || (next.nodeType == classOf[IntIntMapCompNode])
+        || (next.nodeType == classOf[StringStringFilteredMapNode]) || (next.nodeType == classOf[StringIntFilteredMapNode])
+        || (next.nodeType == classOf[IntStringFilteredMapNode]) || (next.nodeType == classOf[IntIntFilteredMapNode]))
+       nested = false
     }
     true
   }
 
-  def updateBank(program: ASTNode): Unit = {
+  def updateBank(program: ASTNode): Unit = { //TODO: Add check to only add non-variable programs,
+    // TODO: aren't only var programs being generated except for arity 0 programs?
     if (!bank.contains(program.cost))
       bank(program.cost) = ArrayBuffer(program)
     else
@@ -88,11 +95,8 @@ class PyProbEnumerator(val vocab: VocabFactory,
 
   def changeLevel(): Boolean = {
     currIterator = totalLeaves.sortBy(_.rootCost).iterator //todo: more efficient
-    for (p <- currLevelPrograms) updateBank(p)
+    if (!nested) for (p <- currLevelPrograms) updateBank(p)
     costLevel += 1
-    if (!bank.isEmpty) Console.withOut(size_log) { iprintln("Bank", bank.values.flatten.toList.map(c => c.code)) }
-    Console.withOut(size_log) { iprintln("============================OE CostLevel============================", costLevel)
-      iprintln(" ") }
     currLevelPrograms.clear()
     advanceRoot()
   }
@@ -105,22 +109,23 @@ class PyProbEnumerator(val vocab: VocabFactory,
       if (rootMaker.hasNext) {
         val program = rootMaker.next
 
-        if (program.values.nonEmpty && oeManager.isRepresentative(program)) {
+        if (program.values.nonEmpty && oeManager.isRepresentative(program)
+       // && !oeManager.irrelevant(program)
+          ) {
           res = Some(program)
         }
       }
       else if (currIterator.hasNext) {
         if (!advanceRoot()) {
-          if (!changeLevel()) changeLevel()
+          if (!changeLevel()) return None
         }
       }
       else if (!changeLevel()) {
-        changeLevel()
+        return None
       }
     }
     currLevelPrograms += res.get
-    Console.withOut(size_log) { iprintln("OP:", currLevelPrograms.takeRight(1).map(c => (c.code, c.cost, c.values))) }
-
+    //Console.withOut(size_log) { println("OP:", currLevelPrograms.takeRight(1).map(c => (c.code, c.values.length))) }
     res
   }
 }

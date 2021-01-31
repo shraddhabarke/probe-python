@@ -32,6 +32,7 @@ class EnumeratorTests  extends JUnitSuite{
     val enumerator = new Enumerator(vocab, new OEValuesManager {
       override def isRepresentative(program: ASTNode): Boolean = true
       override def clear(): Unit = {}
+      override def irrelevant(program: ASTNode): Boolean = false
     },Map("input"->0) :: Nil)
     assertTrue(enumerator.hasNext)
     assertEquals("input",enumerator.next().code)
@@ -169,6 +170,7 @@ class EnumeratorTests  extends JUnitSuite{
     val enumerator = new Enumerator(vocab, new OEValuesManager {
       override def isRepresentative(program: ASTNode): Boolean = true
       override def clear(): Unit = {}
+      override def irrelevant(program: ASTNode): Boolean = false
     },Map.empty[String,AnyRef] :: Nil)
     assertEquals("0",enumerator.next().code)
     assertEquals("1",enumerator.next().code)

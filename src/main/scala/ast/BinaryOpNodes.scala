@@ -7,8 +7,7 @@ trait BinaryOpNode[T] extends ASTNode{
   val rhs: ASTNode
   override val height: Int = 1 + Math.max(lhs.height,rhs.height)
   override val terms: Int = 1 + lhs.terms + rhs.terms
-  if (lhs.values.length != rhs.values.length) { println(lhs.code, rhs.code,
-    lhs.values, rhs.values) }
+  if (lhs.values.length != rhs.values.length) println(lhs.code, lhs.values, rhs.code, rhs.values)
   assert(lhs.values.length == rhs.values.length)
   def doOp(l: Any, r: Any): Option[T]
   def make(l: ASTNode, r: ASTNode): BinaryOpNode[T]

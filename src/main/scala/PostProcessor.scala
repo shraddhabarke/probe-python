@@ -75,6 +75,7 @@ object PostProcessor
                 key.asInstanceOf[PyStringNode],
                 value.asInstanceOf[PyStringNode],
                 map.varName)
+
             case Types.PyInt =>
               new StringIntMapCompNode(
                 list.asInstanceOf[PyStringNode],

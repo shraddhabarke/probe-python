@@ -1,10 +1,9 @@
 package enumeration
 
 import java.io.FileOutputStream
-
 import ast.ASTNode
+import trace.DebugPrints
 import vocab.{VocabFactory, VocabMaker}
-import trace.DebugPrints.{dprintln, iprintln}
 
 import scala.collection.mutable
 
@@ -19,8 +18,9 @@ class PyEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val 
   var height = 0
   var rootMaker: Iterator[ASTNode] =
     currIter.next().init(currLevelProgs.toList, contexts, vocab, height)
-  var height_log = new FileOutputStream("output-height.txt", true)
 
+  ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)
+  ProbUpdate.priors = ProbUpdate.createPyPrior(vocab)
   override def hasNext: Boolean = if (nextProgram.isDefined) true
   else {
     nextProgram = getNextProgram()
@@ -90,7 +90,6 @@ class PyEnumerator(val vocab: VocabFactory, val oeManager: OEValuesManager, val 
       }
     }
     currLevelProgs += res.get
-    Console.withOut(height_log) { iprintln(currLevelProgs.takeRight(1).map(c => (c.code, c.height))) }
     res
   }
 }
