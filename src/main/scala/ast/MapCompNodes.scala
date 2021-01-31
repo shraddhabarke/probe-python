@@ -44,7 +44,7 @@ trait MapCompNode[K,V] extends MapNode[K,V]
   override def includes(varName: String): Boolean =
     varName.equals(this.varName) || list.includes(varName) || key.includes(varName) || value.includes(varName)
   override lazy val usesVariables: Boolean = list.usesVariables || key.usesVariables || value.usesVariables
-  override def updateValues = null
+  override def updateValues = ???
 
 }
 
@@ -98,7 +98,7 @@ trait FilteredMapNode[K,V] extends MapNode[K,V]
           })
       })
   }
-  override def updateValues() = ???
+  override def updateValues = ???
 
 }
 

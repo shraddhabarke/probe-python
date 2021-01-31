@@ -432,7 +432,7 @@ case class PyMapGet(val lhs: MapNode[String,Int], val rhs: PyStringNode) extends
 
   override def make(l: ASTNode, r: ASTNode): BinaryOpNode[Int] =
     new PyMapGet(l.asInstanceOf[MapNode[String,Int]], r.asInstanceOf[PyStringNode])
-  override def updateValues = copy(lhs.updateValues.asInstanceOf[MapNode[String,Int]], rhs.updateValues.asInstanceOf[PyStringNode])
+  override def updateValues = copy(lhs, rhs)
 
 }
 

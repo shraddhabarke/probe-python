@@ -54,9 +54,6 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
        // No children needed, but we still return 1 value
        Iterator.single(Nil)
      }
-     else if (mini == null && nested) {
-       Iterator.empty
-     }
      else if (this.rootCost < costLevel && !nested) { //TODO: add condition (arity != 0)
        val childrenCost = costLevel - this.rootCost
        val children = new ProbChildrenIterator(this.childTypes, childrenCost, bank)

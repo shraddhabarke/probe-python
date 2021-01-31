@@ -111,7 +111,9 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
      * The outer enumerator bank contains list and dictionary comprehension programs
      * which are not needed here since there is no nested enumeration.
      */
-    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
+     Console.withOut(size_log) { println("Iterator:", programs.filter(n => n.nodeType.equals(this.iterableType)).map(c => c.code)) }
+     Console.withOut(size_log) { println("Bank", bank.map(c => c._2.map(c => (c.code,c.cost, c.nodeType)))) }
+     this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
     this.costLevel = costLevel - 1
     this.varName = "var"
     this.contexts = contexts
@@ -226,6 +228,8 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
       }
 
       val value = this.enumerator.next()
+
+    //  Console.withOut(size_log) { println("Next Program,", this.nodeType, this.currList.code, value.code, value.values) }
       if (value.includes(this.varName)) {
         updateVarBank((this.nodeType, this.currList), value) // TODO: update varBank with only variable program
       }
@@ -257,7 +261,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
     while (!done && listIter.hasNext) {
       val lst = listIter.next()
-
+      Console.withOut(size_log) { println("Lst", lst.code, lst.cost)}
       if (lst.values.head.asInstanceOf[String].nonEmpty) {
         this.currList = lst
         val newContexts = this.contexts.zipWithIndex
@@ -280,6 +284,16 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
           val nestedCost = if (this.varBank.contains((this.nodeType, this.currList)))
             this.varBank((this.nodeType, this.currList)).keys.last else 0
+
+          Console.withOut(size_log) {
+            println("------------------------------------------", this.nodeType, currList.code,"------------------------------------------")
+            println("CostLevel Nested:", this.costLevel)
+            println("BankCost:", bankCost) }
+          Console.withOut(size_log) {
+            println("Main Bank", mainBank.map(c => c._2.map(c => (c.code,c.cost))))
+            println("Nested Cost", nestedCost)
+            println(" ")
+          }
 
           // TODO: add the programs from the varBank to the main bank;
           //  pass the updated bank as parameter to the new enumerator object

@@ -8,8 +8,8 @@ import scala.collection.mutable
 
 class NestedChildrenIterator(val childTypes: List[Types],
                              val childrenCost: Int,
-                             val mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
-                             val miniBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]])
+                             var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
+                             var miniBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]])
   extends Iterator[List[ASTNode]] {
 
   val childrenCosts = mainBank.keys.toArray
@@ -21,7 +21,7 @@ class NestedChildrenIterator(val childTypes: List[Types],
   var allExceptLast : Array[ASTNode] = Array.empty
   var newCost = Array[Int]()
   var size_log = new FileOutputStream("output.txt", true)
-
+  mainBank = mainBank.map(n => (n._1, n._2.filter(c => (!c.includes("key") && !c.includes("var")))))
   //TODO: Update Contexts.contexts - already being done in VocabMaker classes
 
   def resetCounter(arity: Int) : Unit = {

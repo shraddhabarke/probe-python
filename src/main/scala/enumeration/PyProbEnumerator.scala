@@ -47,8 +47,8 @@ class PyProbEnumerator(val vocab: VocabFactory,
   resetEnumeration()
   Contexts.contextLen = this.contexts.length
   Contexts.contexts = this.contexts
-
-  mainBank.map(n => (n._1, n._2.filter(c => !c.includes("key")))).
+  //println(mainBank.map(c => c._2.map(d => d.code)))
+  mainBank.map(n => (n._1, n._2.filter(c => (!c.includes("key") && !c.includes("var"))))).
   values.flatten.toList.map(p =>
     if (p.values.length != Contexts.contextLen) oeManager.isRepresentative(p.updateValues) else oeManager.isRepresentative(p)) // OE
 
@@ -112,7 +112,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
       if (rootMaker.hasNext) {
         val program = rootMaker.next
         if (program.values.nonEmpty && oeManager.isRepresentative(program)
-          && !oeManager.irrelevant(program)
+         // && !oeManager.irrelevant(program)
         ) res = Some(program)
       }
       else if (currIterator.hasNext) {
@@ -125,7 +125,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
       }
     }
     currLevelPrograms += res.get
-    //Console.withOut(size_log) { println("OP:", currLevelPrograms.takeRight(1).map(c => (c.code, c.values.length))) }
+    Console.withOut(size_log) { println(nested, currLevelPrograms.takeRight(1).map(c => (c.code, c.cost))) }
     res
   }
 }
