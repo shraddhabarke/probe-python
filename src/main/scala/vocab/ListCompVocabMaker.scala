@@ -5,7 +5,6 @@ import ast.Types.Types
 import ast._
 import enumeration.{Contexts, InputsValuesManager, PyEnumerator, PyProbEnumerator}
 import trace.DebugPrints
-import trace.DebugPrints.iprintln
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -184,12 +183,9 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
       }
 
       val next = this.enumerator.next()
-      Console.withOut(size_log) { println("Next Program,", this.nodeType, this.currList.code, next.code, next.values) }
       if (next.includes(this.varName)) {
         updateMiniBank((this.nodeType, this.currList), next) // TODO: update miniBank with only variable program
-       Console.withOut(size_log) { println("Updating MiniBank,", this.nodeType, this.currList.code, next.code, next.values) }
       }
-
 
       if (next.cost > this.costLevel - this.currList.cost) {
         // We are out of map functions to synthesize for this list.
@@ -198,9 +194,6 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
           return
         }
       } else if (next.nodeType.eq(this.outputListType) && next.includes(this.varName)) {
-
-        //updateMiniBank((this.nodeType, this.currList), next)  // TODO: Check this!
-
         // next is a valid program
         val node = this.makeNode(this.currList, next)
         this.nextProg = Some(node)
@@ -244,17 +237,6 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
 
           val nestedCost = if (this.miniBank.contains((this.nodeType, this.currList)))
             this.miniBank((this.nodeType, this.currList)).keys.last else 0
-
-          Console.withOut(size_log) {
-            println("------------------------------------------", this.nodeType, currList.code,"------------------------------------------")
-            println("CostLevel Nested:", this.costLevel)
-            println("BankCost:", bankCost) }
-          Console.withOut(size_log) {
-            println("Main Bank", mainBank.map(c => c._2.map(c => (c.code,c.values))))
-            if (miniBank != null) println("Mini Bank", miniBank.map(c => c._2.map(c => (c.code,c.values))))
-            println("Nested Cost", nestedCost)
-            println(" ")
-          }
 
           new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false, true,
             nestedCost, mainBank, miniBank)

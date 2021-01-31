@@ -97,7 +97,6 @@ class NestedChildrenIterator(val childTypes: List[Types],
           .map(c => if (c.values.length != Contexts.contextLen) c.updateValues else c),
         miniBank.getOrElse(cost(2), Nil).filter(c => childTypes(2).equals(c.nodeType)).toList
       )
-
     combinationCounter = combinationCounter - 1
   }
 

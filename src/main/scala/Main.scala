@@ -17,11 +17,11 @@ object Main extends App {
   //"src/test/benchmarks/euphony-test/exceljet3.sl"
   //"src/test/benchmarks/too-hard/43606446.sl"
   //"src/test/benchmarks/euphony-test/36462127.sl"
-  "src/test/resources/old_benchmarks/rotate.examples.json"
+  //"src/test/resources/old_benchmarks/rotate.examples.json"
   //"src/test/resources/benchmarks/count_characters.examples.json"
-  //"src/test/resources/old_benchmarks/filter_map.examples.json"
+  "src/test/resources/old_benchmarks/filter_map.examples.json"
   //"src/test/resources/new_benchmarks/rotate_concat.examples.json"
-  //"src/test/resources/benchmarks/abbreviate_1_ex.examples.json"
+  "src/test/resources/benchmarks/abbreviate_2_ex.examples.json"
   // "src/test/resources/old_benchmarks/string_length.examples.json"
 
   //"src/test/resources/old_benchmarks/vowel_count.examples.json"
@@ -119,7 +119,7 @@ object Main extends App {
               rs = Some(
                 (task.asInstanceOf[sygus.PythonPBETask].outputVar + " = " + PostProcessor.clean(program).code,
                   timeout * 1000 - deadline.timeLeft.toMillis.toInt))
-              println(rs.get._1, rs.get._2, program.height, program.cost)
+              println(rs.get._1, rs.get._2, program.height, program.cost, bank.values.toList.length)
               break
             }
             else {

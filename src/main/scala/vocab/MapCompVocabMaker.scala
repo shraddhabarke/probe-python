@@ -273,10 +273,10 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
           Contexts.contexts = newContexts
 
           val bankCost = this.costLevel - this.currList.cost
-          val mainBank = this.mainBank.take(bankCost - 2)
+          val mainBank = this.mainBank.take(bankCost - 1)
 
           val varBank = if (this.varBank.contains((this.nodeType, this.currList)))
-            this.varBank((this.nodeType, this.currList)).take(bankCost - 1) else null
+            this.varBank((this.nodeType, this.currList)).take(bankCost) else null
 
           val nestedCost = if (this.varBank.contains((this.nodeType, this.currList)))
             this.varBank((this.nodeType, this.currList)).keys.last else 0
