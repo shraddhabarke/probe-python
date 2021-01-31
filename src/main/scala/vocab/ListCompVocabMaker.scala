@@ -250,8 +250,8 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
             println("CostLevel Nested:", this.costLevel)
             println("BankCost:", bankCost) }
           Console.withOut(size_log) {
-            println("Main Bank", mainBank.map(c => c._2.map(c => (c.code,c.cost))))
-            if (miniBank != null) println("Mini Bank", miniBank.map(c => c._2.map(c => (c.code,c.cost))))
+            println("Main Bank", mainBank.map(c => c._2.map(c => (c.code,c.values))))
+            if (miniBank != null) println("Mini Bank", miniBank.map(c => c._2.map(c => (c.code,c.values))))
             println("Nested Cost", nestedCost)
             println(" ")
           }

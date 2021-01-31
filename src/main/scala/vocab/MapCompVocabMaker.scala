@@ -27,9 +27,9 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
   var childHeight: Int = _
   var varName: String = _
   var nestedCost: Int = _
-  var miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]] = _
+  var varBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]] = _
 
-  var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
+  var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var nextProg: Option[ASTNode] = None
 
   assert(iterableType.equals(Types.PyString) ||
@@ -103,7 +103,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
                           costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
-                          miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]],
+                          varBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]],
                           mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
 
     this.listIter = programs.filter(n => n.nodeType.equals(this.iterableType)).iterator
@@ -111,11 +111,11 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
      * The outer enumerator bank contains list and dictionary comprehension programs
      * which are not needed here since there is no nested enumeration.
      */
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
     this.costLevel = costLevel - 1
     this.varName = "var"
     this.contexts = contexts
-    this.miniBank = miniBank
+    this.varBank = varBank
     // Make sure the name is unique
     // TODO We need a nicer way to generate this
     while (contexts.head.contains(this.varName)) this.varName = "_" + this.varName
@@ -180,13 +180,13 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
     rs
   }
 
-  private def updateMiniBank(key: (Class[_], ASTNode), value: ASTNode): Unit = {
-    if (!this.miniBank.contains(key))
-      this.miniBank(key) = mutable.Map(value.cost -> ArrayBuffer(value))
-    else if (!this.miniBank(key).contains(value.cost))
-      this.miniBank(key)(value.cost) = ArrayBuffer(value)
+  private def updateVarBank(key: (Class[_], ASTNode), value: ASTNode): Unit = {
+    if (!this.varBank.contains(key))
+      this.varBank(key) = mutable.Map(value.cost -> ArrayBuffer(value))
+    else if (!this.varBank(key).contains(value.cost))
+      this.varBank(key)(value.cost) = ArrayBuffer(value)
     else
-      this.miniBank(key)(value.cost) += value
+      this.varBank(key)(value.cost) += value
   }
 
   private def nextProgram() : Unit =
@@ -227,7 +227,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
       val value = this.enumerator.next()
       if (value.includes(this.varName)) {
-        updateMiniBank((this.nodeType, this.currList), value) // TODO: update miniBank with only variable program
+        updateVarBank((this.nodeType, this.currList), value) // TODO: update varBank with only variable program
       }
 
       //TODO: optimize - right now you need to keep enumerating programs to check whether it's above the required level.
@@ -273,18 +273,18 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
           Contexts.contexts = newContexts
 
           val bankCost = this.costLevel - this.currList.cost
-          val mainBank = this.tempBank.take(bankCost - 2)
+          val mainBank = this.mainBank.take(bankCost - 2)
 
-          val miniBank = if (this.miniBank.contains((this.nodeType, this.currList)))
-            this.miniBank((this.nodeType, this.currList)).take(bankCost - 1) else null
+          val varBank = if (this.varBank.contains((this.nodeType, this.currList)))
+            this.varBank((this.nodeType, this.currList)).take(bankCost - 1) else null
 
-          val nestedCost = if (this.miniBank.contains((this.nodeType, this.currList)))
-            this.miniBank((this.nodeType, this.currList)).keys.last else 0
+          val nestedCost = if (this.varBank.contains((this.nodeType, this.currList)))
+            this.varBank((this.nodeType, this.currList)).keys.last else 0
 
-          // TODO: add the programs from the miniBank to the main bank;
+          // TODO: add the programs from the varBank to the main bank;
           //  pass the updated bank as parameter to the new enumerator object
             new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts,
-            false, true, nestedCost, mainBank, miniBank)
+            false, true, nestedCost, mainBank, varBank)
         }
         done = true
       }
@@ -307,9 +307,8 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
   var childHeight: Int = _
   var keyName: String = _
   var costLevel: Int = _
-  var miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]] = _
-  // TODO- miniBank: mutable.Map[classOf, mutable.Map[ASTNode, mutable.ArrayBuffer[ASTNode]]]
-  var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
+  var varBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]] = _
+  var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
   var nextProg: Option[ASTNode] = None
   var size_log = new FileOutputStream("output.txt", true)
 
@@ -374,15 +373,15 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
   override def probe_init(progs: List[ASTNode], vocabFactory: VocabFactory, costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
-                          miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]],
+                          varBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]],
                           mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] =
   {
     this.mapIter = progs.filter(n => n.isInstanceOf[VariableNode[_]] && n.nodeType.equals(Types.Map(keyType, valueType))).iterator
     this.keyName = "key"
     this.contexts = contexts
     this.costLevel = costLevel - 1
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.keyName))))
-    this.miniBank = miniBank
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.keyName))))
+    this.varBank = varBank
 
     // TODO We need a nicer way to generate this
     while (contexts.head.contains(this.keyName)) this.keyName = "_" + this.keyName
@@ -438,13 +437,13 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
     rs
   }
 
-  private def updateMiniBank(key: (Class[_], ASTNode), value: ASTNode): Unit = {
-    if (!this.miniBank.contains(key))
-      this.miniBank(key) = mutable.Map(value.cost -> ArrayBuffer(value))
-    else if (!this.miniBank(key).contains(value.cost))
-      this.miniBank(key)(value.cost) = ArrayBuffer(value)
+  private def updateVarBank(key: (Class[_], ASTNode), value: ASTNode): Unit = {
+    if (!this.varBank.contains(key))
+      this.varBank(key) = mutable.Map(value.cost -> ArrayBuffer(value))
+    else if (!this.varBank(key).contains(value.cost))
+      this.varBank(key)(value.cost) = ArrayBuffer(value)
     else
-      this.miniBank(key)(value.cost) += value
+      this.varBank(key)(value.cost) += value
   }
 
   private def nextProgram() : Unit =
@@ -483,7 +482,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
       }
       val filter = this.enumerator.next()
       if (filter.includes(this.keyName)) {
-        updateMiniBank((this.nodeType, this.currMap), filter) // TODO: update miniBank with only variable programs
+        updateVarBank((this.nodeType, this.currMap), filter) // TODO: update varBank with only variable programs
       }
 
       if (filter.cost > this.costLevel - this.currMap.cost) {
@@ -495,7 +494,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
       } else if (filter.isInstanceOf[PyBoolNode] && filter.includes(this.keyName)) {
         // next is a valid program
         val node = this.makeNode(this.currMap, filter.asInstanceOf[PyBoolNode])
-      //  updateMiniBank((this.nodeType, this.currMap), node)       // TODO: update miniBank with only variable programs
+      //  updateVarBank((this.nodeType, this.currMap), node)       // TODO: update varBank with only variable programs
         this.nextProg = Some(node)
       }
     }
@@ -524,16 +523,16 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
           Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
           Contexts.contexts = newContexts
           val bankCost = this.costLevel - this.currMap.cost
-          val mainBank = this.tempBank.take(bankCost - 2)
+          val mainBank = this.mainBank.take(bankCost - 1)
 
-          val miniBank = if (this.miniBank.contains((this.nodeType, this.currMap)))
-            this.miniBank((this.nodeType, this.currMap)).take(bankCost - 1) else null
+          val varBank = if (this.varBank.contains((this.nodeType, this.currMap)))
+            this.varBank((this.nodeType, this.currMap)).take(bankCost) else null
 
-          val nestedCost = if (this.miniBank.contains((this.nodeType, this.currMap)))
-            this.miniBank((this.nodeType, this.currMap)).keys.last else 0
+          val nestedCost = if (this.varBank.contains((this.nodeType, this.currMap)))
+            this.varBank((this.nodeType, this.currMap)).keys.last else 0
 
           new PyProbEnumerator(this.filterVocab, oeValuesManager, newContexts, false, true, nestedCost, mainBank,
-            miniBank)
+            varBank)
         }
         done = true
       }

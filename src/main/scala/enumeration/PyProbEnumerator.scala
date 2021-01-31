@@ -12,8 +12,8 @@ class PyProbEnumerator(val vocab: VocabFactory,
                        val contexts: List[Map[String,Any]],
                        val probBased: Boolean, var nested: Boolean,
                        var initCost: Int,
-                       var bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
-                       var mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) extends Iterator[ASTNode] {
+                       var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
+                       var vars: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) extends Iterator[ASTNode] {
 
   override def toString(): String = "enumeration.Enumerator"
   var nextProgram: Option[ASTNode] = None
@@ -38,7 +38,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
   var costLevel = initCost
   var currIterator: Iterator[VocabMaker] = _
   var currLevelPrograms: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
-  var miniBank = mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]]()
+  var varBank = mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]]()
   val totalLeaves = vocab.leaves().toList.distinct ++ vocab.nonLeaves().toList.distinct
   var size_log = new FileOutputStream("output.txt", true)
 
@@ -47,16 +47,16 @@ class PyProbEnumerator(val vocab: VocabFactory,
   resetEnumeration()
   Contexts.contextLen = this.contexts.length
   Contexts.contexts = this.contexts
-  bank.values.flatten.toList.foreach(p => oeManager.isRepresentative(p)) // does this take care of OE?
-
-  def currentCost: Int = costLevel
+  mainBank.values.flatten.toList.map(p => if (p.values.length != Contexts.contextLen)
+    oeManager.isRepresentative(p.updateValues) else oeManager.isRepresentative(p)) // OE
+  if (vars != null) vars.values.flatten.toList.map(p => oeManager.isRepresentative(p)) // OE
 
   var rootMaker: Iterator[ASTNode] = currIterator.next().
-    probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank, mini)
+    probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, mainBank, nested, varBank, vars)
 
   def resetEnumeration(): Unit = {
     currIterator = totalLeaves.sortBy(_.rootCost).iterator
-    rootMaker = currIterator.next().probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank, mini)
+    rootMaker = currIterator.next().probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, mainBank, nested, varBank, vars)
     currLevelPrograms.clear()
     oeManager.clear()
   }
@@ -72,7 +72,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
     while (rootMaker == null || !rootMaker.hasNext) {
       if (!currIterator.hasNext) { return false }
       val next = currIterator.next()
-      rootMaker = next.probe_init(bank.values.flatten.toList, vocab, costLevel, contexts, bank, nested, miniBank, mini)
+      rootMaker = next.probe_init(mainBank.values.flatten.toList, vocab, costLevel, contexts, mainBank, nested, varBank, vars)
       if ((next.nodeType == classOf[StringToStringListCompNode]) || (next.nodeType == classOf[StringToIntListCompNode])
       || (next.nodeType == classOf[IntToStringListCompNode]) || (next.nodeType == classOf[IntToIntListCompNode])
       || (next.nodeType == classOf[StringStringMapCompNode]) || (next.nodeType == classOf[StringIntMapCompNode])
@@ -87,10 +87,10 @@ class PyProbEnumerator(val vocab: VocabFactory,
 
   def updateBank(program: ASTNode): Unit = { //TODO: Add check to only add non-variable programs,
     // TODO: aren't only var programs being generated except for arity 0 programs?
-    if (!bank.contains(program.cost))
-      bank(program.cost) = ArrayBuffer(program)
+    if (!mainBank.contains(program.cost))
+      mainBank(program.cost) = ArrayBuffer(program)
     else
-      bank(program.cost) += program
+      mainBank(program.cost) += program
   }
 
   def changeLevel(): Boolean = {
@@ -108,7 +108,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
     while (res.isEmpty) {
       if (rootMaker.hasNext) {
         val program = rootMaker.next
-
+      //  Console.withOut(size_log) { println(program.code, program.values) }
         if (program.values.nonEmpty && oeManager.isRepresentative(program)
        // && !oeManager.irrelevant(program)
           ) {
