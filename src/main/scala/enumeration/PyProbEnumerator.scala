@@ -47,19 +47,20 @@ class PyProbEnumerator(val vocab: VocabFactory,
   resetEnumeration()
   Contexts.contextLen = this.contexts.length
   Contexts.contexts = this.contexts
-  //println(mainBank.map(c => c._2.map(d => d.code)))
   mainBank.map(n => (n._1, n._2.filter(c => (!c.includes("key") && !c.includes("var"))))).
   values.flatten.toList.map(p =>
-    if (p.values.length != Contexts.contextLen) oeManager.isRepresentative(p.updateValues) else oeManager.isRepresentative(p)) // OE
+    if (p.values.length != Contexts.contextLen)
+      oeManager.isRepresentative(p.updateValues)
+    else oeManager.isRepresentative(p)) // OE
 
   if (vars != null) vars.values.flatten.toList.map(p => oeManager.isRepresentative(p)) // OE
 
   var rootMaker: Iterator[ASTNode] = currIterator.next().
-    probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, mainBank, nested, varBank, vars)
+    probe_init(vocab, costLevel, contexts, mainBank, nested, varBank, vars)
 
   def resetEnumeration(): Unit = {
     currIterator = totalLeaves.sortBy(_.rootCost).iterator
-    rootMaker = currIterator.next().probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, mainBank, nested, varBank, vars)
+    rootMaker = currIterator.next().probe_init(vocab, costLevel, contexts, mainBank, nested, varBank, vars)
     currLevelPrograms.clear()
     oeManager.clear()
   }
@@ -75,7 +76,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
     while (rootMaker == null || !rootMaker.hasNext) {
       if (!currIterator.hasNext) { return false }
       val next = currIterator.next()
-      rootMaker = next.probe_init(mainBank.values.flatten.toList, vocab, costLevel, contexts, mainBank, nested, varBank, vars)
+      rootMaker = next.probe_init(vocab, costLevel, contexts, mainBank, nested, varBank, vars)
       if ((next.nodeType == classOf[StringToStringListCompNode]) || (next.nodeType == classOf[StringToIntListCompNode])
       || (next.nodeType == classOf[IntToStringListCompNode]) || (next.nodeType == classOf[IntToIntListCompNode])
       || (next.nodeType == classOf[StringStringMapCompNode]) || (next.nodeType == classOf[StringIntMapCompNode])
@@ -112,7 +113,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
       if (rootMaker.hasNext) {
         val program = rootMaker.next
         if (program.values.nonEmpty && oeManager.isRepresentative(program)
-         // && !oeManager.irrelevant(program)
+       && !oeManager.irrelevant(program)
         ) res = Some(program)
       }
       else if (currIterator.hasNext) {
@@ -125,7 +126,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
       }
     }
     currLevelPrograms += res.get
-    Console.withOut(size_log) { println(nested, currLevelPrograms.takeRight(1).map(c => (c.code, c.cost))) }
+    //Console.withOut(size_log) { println(nested, currLevelPrograms.takeRight(1).map(c => (c.code, c.values))) }
     res
   }
 }

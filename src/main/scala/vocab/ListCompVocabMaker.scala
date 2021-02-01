@@ -28,7 +28,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
   var varName: String = _
   var nextProg: Option[ASTNode] = None
   var miniBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]] = _
-  var tempBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
+  var mainBank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]] = _
 
   assert(inputListType.equals(Types.PyInt) || inputListType.equals(Types.PyString),
     s"List comprehension input type not supported: $inputListType")
@@ -84,7 +84,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
     this
   }
 
-  override def probe_init(programs: List[ASTNode], vocabFactory: VocabFactory,
+  override def probe_init(vocabFactory: VocabFactory,
                           costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
@@ -92,8 +92,9 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
                           mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
 
     this.costLevel = costLevel - 1
-    this.listIter = programs.filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
-    this.tempBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
+    this.listIter = this.mainBank.dropRight(1).values.flatten.toList
+      .filter(n => n.nodeType.equals(Types.listOf(this.inputListType))).iterator
     this.varName = "var"
     this.contexts = contexts
     this.miniBank = miniBank
@@ -178,11 +179,11 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
     if (this.enumerator == null) return
 
     while (this.nextProg.isEmpty) {
-      if (!this.enumerator.hasNext) {
-        return
-      }
+
+      while (!this.enumerator.hasNext) { if (!this.nextList()) return }
 
       val next = this.enumerator.next()
+
       if (next.includes(this.varName)) {
         updateMiniBank((this.nodeType, this.currList), next) // TODO: update miniBank with only variable program
       }
@@ -230,13 +231,14 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
           Contexts.contextLen = newContexts.length //TODO: If context changes, recompute the values
           Contexts.contexts = newContexts
           val bankCost = this.costLevel - this.currList.cost
-          val mainBank = this.tempBank.take(bankCost - 1)
+          val mainBank = this.mainBank.take(bankCost - 1)
 
           val miniBank = if (this.miniBank.contains((this.nodeType, this.currList)))
             this.miniBank((this.nodeType, this.currList)).take(bankCost) else null
 
           val nestedCost = if (this.miniBank.contains((this.nodeType, this.currList)))
             this.miniBank((this.nodeType, this.currList)).keys.last else 0
+
 
           new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts, false, true,
             nestedCost, mainBank, miniBank)

@@ -16,13 +16,12 @@ class NestedChildrenIterator(val childTypes: List[Types],
   val arity = childTypes.length
   val costs = ProbCosts.getCosts(childrenCost, childrenCosts, childTypes.size)
   var childrenLists : List[List[ASTNode]] = Nil
-  var combinationCounter = 0  //TODO: fix for arity 3
+  var combinationCounter = 0
   var candidates = Array[Iterator[ASTNode]]()
   var allExceptLast : Array[ASTNode] = Array.empty
   var newCost = Array[Int]()
-  var size_log = new FileOutputStream("output.txt", true)
   mainBank = mainBank.map(n => (n._1, n._2.filter(c => (!c.includes("key") && !c.includes("var")))))
-  //TODO: Update Contexts.contexts - already being done in VocabMaker classes
+  //TODO: alternate to filtering the mainBank
 
   def resetCounter(arity: Int) : Unit = {
       if (arity == 1) combinationCounter = 1

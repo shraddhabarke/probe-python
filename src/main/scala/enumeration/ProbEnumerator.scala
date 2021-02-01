@@ -46,11 +46,11 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
 
   resetEnumeration()
   var rootMaker: Iterator[ASTNode] = currIter.next()
-    .probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank, false, miniBank, bank)
+    .probe_init(vocab, costLevel, contexts, bank, false, miniBank, bank)
 
   def resetEnumeration():  Unit = {
     currIter = vocab.leaves().toList.sortBy(_.rootCost).toIterator
-    rootMaker = currIter.next().probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank, false, miniBank, bank)
+    rootMaker = currIter.next().probe_init(vocab, costLevel, contexts, bank, false, miniBank, bank)
     childrenIterator = Iterator.single(Nil)
     currLevelProgs.clear()
     oeManager.clear()
@@ -64,7 +64,7 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
     while (rootMaker == null || !rootMaker.hasNext) {
       if (!currIter.hasNext) return false
       val next = currIter.next()
-      rootMaker = next.probe_init(currLevelProgs.toList, vocab, costLevel, contexts, bank, false, miniBank, bank)
+      rootMaker = next.probe_init(vocab, costLevel, contexts, bank, false, miniBank, bank)
     }
     true
   }

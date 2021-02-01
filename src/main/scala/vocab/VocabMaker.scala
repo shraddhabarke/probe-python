@@ -33,8 +33,7 @@ trait VocabMaker {
     ProbUpdate.priors(nodeType, Some(head)) else ProbUpdate.priors(nodeType, None)
 
   def init(programs: List[ASTNode], contexts : List[Map[String, Any]], vocabFactory: VocabFactory, height: Int) : Iterator[ASTNode]
-  def probe_init(programs: List[ASTNode],
-                 vocabFactory: VocabFactory,
+  def probe_init(vocabFactory: VocabFactory,
                  costLevel: Int, contexts: List[Map[String,Any]],
                  bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                  nested: Boolean,

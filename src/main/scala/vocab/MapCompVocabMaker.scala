@@ -99,28 +99,27 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
     this
   }
 
-   override def probe_init(programs: List[ASTNode], vocabFactory: VocabFactory,
+   override def probe_init(vocabFactory: VocabFactory,
                           costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
                           varBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]],
                           mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
 
-    this.listIter = programs.filter(n => n.nodeType.equals(this.iterableType)).iterator
-    /**
+     this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
+     this.listIter = this.mainBank.dropRight(1).values.flatten.toList.filter(n => n.nodeType.equals(this.iterableType)).iterator
+
+     /**
      * The outer enumerator bank contains list and dictionary comprehension programs
      * which are not needed here since there is no nested enumeration.
-     */
-     Console.withOut(size_log) { println("Iterator:", programs.filter(n => n.nodeType.equals(this.iterableType)).map(c => c.code)) }
-     Console.withOut(size_log) { println("Bank", bank.map(c => c._2.map(c => (c.code,c.cost, c.nodeType)))) }
-     this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.varName))))
-    this.costLevel = costLevel - 1
-    this.varName = "var"
-    this.contexts = contexts
-    this.varBank = varBank
+    **/
+     this.costLevel = costLevel - 1
+     this.varName = "var"
+     this.contexts = contexts
+     this.varBank = varBank
     // Make sure the name is unique
     // TODO We need a nicer way to generate this
-    while (contexts.head.contains(this.varName)) this.varName = "_" + this.varName
+     while (contexts.head.contains(this.varName)) this.varName = "_" + this.varName
 
     // Filter the vocabs for the map function
     // TODO There has to be a more efficient way
@@ -223,13 +222,11 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
     if (this.enumerator == null) return
 
     while (this.nextProg.isEmpty) {
-      if (!this.enumerator.hasNext) {
-        return
-      }
+
+      while (!this.enumerator.hasNext) { if (!this.nextList()) return }
 
       val value = this.enumerator.next()
 
-    //  Console.withOut(size_log) { println("Next Program,", this.nodeType, this.currList.code, value.code, value.values) }
       if (value.includes(this.varName)) {
         updateVarBank((this.nodeType, this.currList), value) // TODO: update varBank with only variable program
       }
@@ -250,7 +247,6 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
           new PyStringVariable(varName, this.enumerator.asInstanceOf[PyProbEnumerator].contexts),
           value)
         this.nextProg = Some(node)
-
       }
     }
   }
@@ -261,7 +257,7 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
     while (!done && listIter.hasNext) {
       val lst = listIter.next()
-      Console.withOut(size_log) { println("Lst", lst.code, lst.cost)}
+
       if (lst.values.head.asInstanceOf[String].nonEmpty) {
         this.currList = lst
         val newContexts = this.contexts.zipWithIndex
@@ -284,17 +280,6 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
           val nestedCost = if (this.varBank.contains((this.nodeType, this.currList)))
             this.varBank((this.nodeType, this.currList)).keys.last else 0
-
-          Console.withOut(size_log) {
-            println("------------------------------------------", this.nodeType, currList.code,"------------------------------------------")
-            println("CostLevel Nested:", this.costLevel)
-            println("BankCost:", bankCost) }
-          Console.withOut(size_log) {
-            println("Main Bank", mainBank.map(c => c._2.map(c => (c.code,c.cost))))
-            println("Nested Cost", nestedCost)
-            println(" ")
-          }
-
           // TODO: add the programs from the varBank to the main bank;
           //  pass the updated bank as parameter to the new enumerator object
             new PyProbEnumerator(this.mapVocab, oeValuesManager, newContexts,
@@ -384,17 +369,20 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
     this
   }
 
-  override def probe_init(progs: List[ASTNode], vocabFactory: VocabFactory, costLevel: Int, contexts: List[Map[String,Any]],
+  override def probe_init(vocabFactory: VocabFactory, costLevel: Int, contexts: List[Map[String,Any]],
                           bank: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]],
                           nested: Boolean,
                           varBank: mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]],
-                          mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] =
-  {
-    this.mapIter = progs.filter(n => n.isInstanceOf[VariableNode[_]] && n.nodeType.equals(Types.Map(keyType, valueType))).iterator
+                          mini: mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]) : Iterator[ASTNode] = {
+
+
+    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.keyName))))
+    this.mapIter = this.mainBank.dropRight(1).values.flatten.toList.
+      filter(n => n.isInstanceOf[VariableNode[_]] && n.nodeType.equals(Types.Map(keyType, valueType))).iterator
+
     this.keyName = "key"
     this.contexts = contexts
     this.costLevel = costLevel - 1
-    this.mainBank = bank.map(n => (n._1, n._2.filter(c => !c.includes(this.keyName))))
     this.varBank = varBank
 
     // TODO We need a nicer way to generate this
@@ -491,9 +479,9 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
     if (this.enumerator == null) return
 
     while (this.nextProg.isEmpty) {
-      if (!this.enumerator.hasNext) {
-        return
-      }
+
+      while (!this.enumerator.hasNext) { if (!this.nextMap()) return }
+
       val filter = this.enumerator.next()
       if (filter.includes(this.keyName)) {
         updateVarBank((this.nodeType, this.currMap), filter) // TODO: update varBank with only variable programs
@@ -508,7 +496,6 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
       } else if (filter.isInstanceOf[PyBoolNode] && filter.includes(this.keyName)) {
         // next is a valid program
         val node = this.makeNode(this.currMap, filter.asInstanceOf[PyBoolNode])
-      //  updateVarBank((this.nodeType, this.currMap), node)       // TODO: update varBank with only variable programs
         this.nextProg = Some(node)
       }
     }

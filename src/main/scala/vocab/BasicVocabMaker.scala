@@ -40,8 +40,7 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
     this
   }
 
-   def probe_init(programs: List[ASTNode],
-                  vocabFactory: VocabFactory,
+   def probe_init(vocabFactory: VocabFactory,
                   costLevel: Int,
                   contexts: List[Map[String, Any]],
                   bank: mutable.Map[Int, ArrayBuffer[ASTNode]],
@@ -54,6 +53,7 @@ trait BasicVocabMaker extends VocabMaker with Iterator[ASTNode] {
        // No children needed, but we still return 1 value
        Iterator.single(Nil)
      }
+     else if (mini == null && nested) Iterator.empty
      else if (this.rootCost < costLevel && !nested) { //TODO: add condition (arity != 0)
        val childrenCost = costLevel - this.rootCost
        val children = new ProbChildrenIterator(this.childTypes, childrenCost, bank)
