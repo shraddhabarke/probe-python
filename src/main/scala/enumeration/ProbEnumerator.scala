@@ -35,7 +35,7 @@ class ProbEnumerator(val filename: String, val vocab: VocabFactory, val oeManage
   var childrenIterator: Iterator[List[ASTNode]] = null
   var currLevelProgs: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
   var bank = mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]()
-  var miniBank = mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]()
+  var miniBank = mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]]()
   var fos = new FileOutputStream("output-size.txt", true)
   var phaseCounter: Int = 0
   var fitsMap = mutable.Map[(Class[_], Option[Any]), Double]()

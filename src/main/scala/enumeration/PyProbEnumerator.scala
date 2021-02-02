@@ -40,8 +40,8 @@ class PyProbEnumerator(val vocab: VocabFactory,
   var costLevel = initCost
   var currIterator: Iterator[VocabMaker] = _
   var currLevelPrograms: mutable.ArrayBuffer[ASTNode] = mutable.ArrayBuffer()
-  var miniBank = mutable.Map[(Class[_], ASTNode), mutable.ArrayBuffer[ASTNode]]()
-  var size_log = new FileOutputStream("output-dict.txt", true)
+  var miniBank = mutable.Map[(Class[_], ASTNode), mutable.Map[Int, mutable.ArrayBuffer[ASTNode]]]()
+  var size_log = new FileOutputStream("output.txt", true)
   val totalLeaves = vocab.leaves().toList.distinct ++ vocab.nonLeaves().toList.distinct
   ProbUpdate.probMap = ProbUpdate.createPyProbMap(vocab)
   ProbUpdate.priors = ProbUpdate.createPyPrior(vocab)
@@ -49,12 +49,11 @@ class PyProbEnumerator(val vocab: VocabFactory,
 
   Contexts.contextLen = this.contexts.length
   Contexts.contexts = this.contexts
+
   bank.values.flatten.toList.foreach(p => oeManager.isRepresentative(p)) // does this take care of OE?
-  DebugPrints.iprintln()
 
   var rootMaker: Iterator[ASTNode] = currIterator.next().
     probe_init(currLevelPrograms.toList, vocab, costLevel, contexts, bank, nested, miniBank)
-
 
   def resetEnumeration(): Unit = {
     currIterator = totalLeaves.sortBy(_.rootCost).iterator
@@ -90,9 +89,6 @@ class PyProbEnumerator(val vocab: VocabFactory,
     currIterator = totalLeaves.sortBy(_.rootCost).iterator //todo: more efficient
     for (p <- currLevelPrograms) updateBank(p)
     costLevel += 1
-    if (!bank.isEmpty) Console.withOut(size_log) { iprintln("Bank", bank.values.flatten.toList.map(c => c.code)) }
-    Console.withOut(size_log) { iprintln("============================OE CostLevel============================", costLevel)
-      iprintln(" ") }
     currLevelPrograms.clear()
     advanceRoot()
   }
@@ -111,15 +107,15 @@ class PyProbEnumerator(val vocab: VocabFactory,
       }
       else if (currIterator.hasNext) {
         if (!advanceRoot()) {
-          if (!changeLevel()) changeLevel()
+          if (!changeLevel()) return None
         }
       }
       else if (!changeLevel()) {
-        changeLevel()
+        return None
       }
     }
     currLevelPrograms += res.get
-    Console.withOut(size_log) { iprintln("OP:", currLevelPrograms.takeRight(1).map(c => (c.code, c.cost, c.values))) }
+    Console.withOut(size_log) { println("OP:", currLevelPrograms.takeRight(1).map(c => (c.code, c.cost, c.values))) }
 
     res
   }

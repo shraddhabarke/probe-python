@@ -19,8 +19,8 @@ object Main extends App {
   //"src/test/benchmarks/euphony-test/36462127.sl"
   //"src/test/resources/old_benchmarks/rotate.examples.json"
   //"src/test/resources/benchmarks/abbreviate_2_ex.examples.json"
-  //"src/test/resources/old_benchmarks/filter_map.examples.json"
-  "src/test/resources/old_benchmarks/get_middle.examples.json"
+  "src/test/resources/old_benchmarks/filter_map.examples.json"
+  //"src/test/resources/old_benchmarks/get_middle.examples.json"
   //"src/test/resources/benchmarks/abbreviate_4_ex.examples.json"
   //"src/test/resources/old_benchmarks/string_length.examples.json"
   //"src/test/resources/old_benchmarks/vowel_count.examples.json"
@@ -88,7 +88,7 @@ object Main extends App {
     p
   }
 
-  def synthesizePython(task: PySynthesisTask, sizeBased: Boolean, timeout: Int = 20) : Option[(String, Int)] =
+  def synthesizePython(task: PySynthesisTask, sizeBased: Boolean, timeout: Int = 2000) : Option[(String, Int)] =
   {
     var rs: Option[(String, Int)] = None
     val oeManager = new InputsValuesManager()
