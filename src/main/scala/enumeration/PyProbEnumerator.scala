@@ -47,6 +47,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
   resetEnumeration()
   Contexts.contextLen = this.contexts.length
   Contexts.contexts = this.contexts
+
   mainBank.map(n => (n._1, n._2.filter(c => (!c.includes("key") && !c.includes("var"))))).
   values.flatten.toList.map(p =>
     if (p.values.length != Contexts.contextLen)
@@ -113,7 +114,7 @@ class PyProbEnumerator(val vocab: VocabFactory,
       if (rootMaker.hasNext) {
         val program = rootMaker.next
         if (program.values.nonEmpty && oeManager.isRepresentative(program)
-       && !oeManager.irrelevant(program)
+        && !oeManager.irrelevant(program)
         ) res = Some(program)
       }
       else if (currIterator.hasNext) {

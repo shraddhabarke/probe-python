@@ -227,10 +227,8 @@ abstract class MapCompVocabMaker(iterableType: Types, valueType: Types, size: Bo
 
       val value = this.enumerator.next()
 
-      if (value.includes(this.varName)) {
-        updateVarBank((this.nodeType, this.currList), value) // TODO: update varBank with only variable program
-      }
-
+      if (value.cost < this.costLevel - this.currList.cost)
+        updateVarBank((this.nodeType, this.currList), value) // TODO: update varBank with only variable programs
       //TODO: optimize - right now you need to keep enumerating programs to check whether it's above the required level.
       // What if there are many empty levels?
 
@@ -483,9 +481,9 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
       while (!this.enumerator.hasNext) { if (!this.nextMap()) return }
 
       val filter = this.enumerator.next()
-      if (filter.includes(this.keyName)) {
+
+      if (filter.cost < this.costLevel - this.currMap.cost)
         updateVarBank((this.nodeType, this.currMap), filter) // TODO: update varBank with only variable programs
-      }
 
       if (filter.cost > this.costLevel - this.currMap.cost) {
         // We are out of map functions to synthesize for this list.
@@ -497,6 +495,7 @@ abstract class FilteredMapVocabMaker(keyType: Types, valueType: Types, size: Boo
         // next is a valid program
         val node = this.makeNode(this.currMap, filter.asInstanceOf[PyBoolNode])
         this.nextProg = Some(node)
+
       }
     }
   }

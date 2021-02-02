@@ -184,7 +184,7 @@ abstract class ListCompVocabMaker(inputListType: Types, outputListType: Types, s
 
       val next = this.enumerator.next()
 
-      if (next.includes(this.varName)) {
+      if (next.cost < this.costLevel - this.currList.cost) {
         updateMiniBank((this.nodeType, this.currList), next) // TODO: update miniBank with only variable program
       }
 
