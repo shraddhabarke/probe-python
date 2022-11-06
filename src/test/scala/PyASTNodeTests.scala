@@ -1173,4 +1173,5 @@ class PyASTNodeTests extends JUnitSuite {
     val divNumbers2 = new PyIntDivision(new PyIntLiteral(1,1),addNumbers)
     assertEquals("1 // (1 + 2 + 3 + 4)", divNumbers2.code)
   }
+  @Test def listStringAt(): Unit = ()
 }
