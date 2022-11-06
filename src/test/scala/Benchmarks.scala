@@ -8,8 +8,8 @@ object Benchmarks extends App
       "-------------------------------------------\n" +
       "| Probe-Python Synthesizer |\n" +
       "-------------------------------------------\n")
-  println("Index Name                 Program")
-
+  println("Index Name                 time     Program")
+  trace.DebugPrints.setNone()
   val benchmarks = new File("src/test/resources/")
   assert(benchmarks.isDirectory)
 
