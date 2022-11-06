@@ -553,10 +553,19 @@ case class PyStringSplit(val lhs: PyStringNode, val rhs: PyStringNode) extends B
 {
   override protected val parenless: Boolean = true
   override lazy val code: String = lhs.parensIfNeeded + ".split(" + rhs.code + ")"
-
+  private def split_python(s : String, sep: String): Array[String] = {
+    var rs = s.split(sep)
+    // scala split keep first empty, unless it is the only character
+    if (s.startsWith(sep) && s.length == 1)
+      rs = "" +: rs
+    // scala split remove last empty field
+    if (s.endsWith(sep))
+      rs = rs :+ ""
+    rs
+  }
   override def doOp(l: Any, r: Any): Option[Iterable[String]] = (l, r) match {
     case (_, "") => None
-    case (l: String, r: String) => Some(l.split(r).toList)
+    case (l: String, r: String) => Some(split_python(l, r).toList)
     case _ => wrongType(l, r)
   }
 
