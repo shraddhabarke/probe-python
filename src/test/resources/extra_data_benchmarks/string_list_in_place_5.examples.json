@@ -1,0 +1,26 @@
+{
+  "comment": "takes too long. overfit with n.",
+  "varName": "rs",
+  "env": [
+    {
+      "n": "1",
+      "l": "['abc', 'def', 'ghi']",
+      "rs": "'def'"
+    },
+    {
+      "n": "1",
+      "l": "['abc', 'def', 'ghi', 'ufi']",
+      "rs": "'def'"
+    },
+    {
+      "n": "1",
+      "l": "['abc', 'ful', 'ghi', 'ufi']",
+      "rs": "'ful'"
+    },
+    {
+      "n": "0",
+      "l": "['abc', 'ful']",
+      "rs": "'abc'"
+    }
+  ]
+}
