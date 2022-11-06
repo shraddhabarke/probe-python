@@ -1,0 +1,18 @@
+{
+  "comment": "Doesn't work.",
+  "varName": "rs",
+  "env": [
+    {
+      "s": "'a_b_c'",
+      "rs": "'ABC'"
+    },
+    {
+      "s": "'var_dam'",
+      "rs": "'VarDam'"
+    },
+    {
+      "s": "'tmp_coef'",
+      "rs": "'TmpCoef'"
+    }
+  ]
+}

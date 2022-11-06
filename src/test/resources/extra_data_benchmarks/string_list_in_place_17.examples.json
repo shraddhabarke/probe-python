@@ -1,0 +1,18 @@
+{
+  "comment": "hell overfits.",
+  "varName": "rs",
+  "env": [
+    {
+      "s": "'abcgade'",
+      "rs": "'a'"
+    },
+    {
+      "s": "'mfjfoflfd'",
+      "rs": "'f'"
+    },
+    {
+      "s": "'aabbb'",
+      "rs": "'b'"
+    }
+  ]
+}

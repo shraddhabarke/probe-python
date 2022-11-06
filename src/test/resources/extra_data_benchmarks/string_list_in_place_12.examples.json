@@ -1,0 +1,16 @@
+{
+  "comment": "Doesn't work.",
+  "varName": "rs",
+  "env": [
+    {
+      "c1": "4",
+      "s": "'abc'",
+      "rs": "'abcabcabcabc'"
+    },
+    {
+      "c1": "2",
+      "s": "'a'",
+      "rs": "'aa'"
+    }
+  ]
+}

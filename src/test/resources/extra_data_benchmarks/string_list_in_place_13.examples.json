@@ -1,0 +1,21 @@
+{
+  "comment": "work, overfit.",
+  "varName": "rs",
+  "env": [
+    {
+      "c1": "4",
+      "s": "'abc'",
+      "rs": "'abcabcabcabc'"
+    },
+    {
+      "c1": "10",
+      "s": "'b'",
+      "rs": "'bbbbbbbbbb'"
+    },
+    {
+      "c1": "2",
+      "s": "'a'",
+      "rs": "'aa'"
+    }
+  ]
+}

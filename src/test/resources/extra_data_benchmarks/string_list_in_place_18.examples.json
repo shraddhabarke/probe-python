@@ -1,0 +1,18 @@
+{
+  "comment": "Doesn't work.",
+  "varName": "rs",
+  "env": [
+    {
+      "s": "'applGe'",
+      "rs": "'apple'"
+    },
+    {
+      "s": "'wXhat'",
+      "rs": "'whats'"
+    },
+    {
+      "s": "'Coffee'",
+      "rs": "'offee'"
+    }
+  ]
+}

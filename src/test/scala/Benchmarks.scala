@@ -17,7 +17,7 @@ object Benchmarks extends App
     dir => {
       println("----- -------------------- --------------------------------------")
       dir.listFiles()
-        .filter(_.getName.contains(".examples.json"))
+        .filter(_.getName.contains("20.examples.json"))
         .filter(!_.getName.contains(".out"))
         .sorted
         .zipWithIndex

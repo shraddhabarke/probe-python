@@ -1,0 +1,16 @@
+{
+  "comment": "work, overfit.",
+  "varName": "rs",
+  "env": [
+    {
+      "c1": "0",
+      "l": "['abc', 'def', 'ghi', 'jkl']",
+      "rs": "'jkl'"
+    },
+    {
+      "c1": "2",
+      "l": "['abc', 'def', 'ghi', 'jkl', 'mno']",
+      "rs": "'ghi'"
+    }
+  ]
+}
