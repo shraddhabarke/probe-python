@@ -1,9 +1,0 @@
-{
-  "varName": "rs",
-  "env": [
-    {
-      "l": "['abc', 'def', 'ghi']",
-      "rs": "'def'"
-    }
-  ]
-}

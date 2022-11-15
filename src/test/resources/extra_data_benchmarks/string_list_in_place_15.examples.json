@@ -1,6 +1,7 @@
 {
   "comment": "overfits.",
   "varName": "rs",
+  "pre_context":"def maxChar():\n\ts = input()\n\t<rs = $>",
   "env": [
     {
       "s": "'abcde'",

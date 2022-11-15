@@ -1,6 +1,7 @@
 {
   "comment": "hell overfits.",
   "varName": "rs",
+  "pre_context":"def func():\n\ts = input()\n\tcm =s.charmap()\n\t <rs = $>",
   "env": [
     {
       "s": "'abcgade'",
@@ -13,6 +14,14 @@
     {
       "s": "'aabbb'",
       "rs": "'b'"
+    },
+    {
+      "s": "'a'",
+      "rs": "'a'"
+    },
+    {
+      "s": "'ababa'",
+      "rs": "'a'"
     }
   ]
 }

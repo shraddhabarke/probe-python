@@ -1,6 +1,7 @@
 {
   "comment": "work, overfit.",
   "varName": "rs",
+  "pre_context": "def something():\n\tl = input()\n\tc1 = input()\n\tif c1>len(l):\n\t\t<rs = $>",
   "env": [
     {
       "c1": "7",
