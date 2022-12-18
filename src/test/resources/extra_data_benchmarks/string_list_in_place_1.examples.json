@@ -1,0 +1,15 @@
+{
+  "comment": "work.",
+  "varName": "rs",
+  "pre_context":"def concatListStrings():\n\tl = input()\n\ts=\"\"\n\t<rs = $>",
+  "env": [
+    {
+      "l": "['a','d','b']",
+      "rs": "'abd'"
+    },
+    {
+      "l": "['c', 'b']",
+      "rs": "'cb'"
+    }
+  ]
+}
