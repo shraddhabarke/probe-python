@@ -1,21 +1,22 @@
 {
-  "comment": "Probe ignores 'n' value, and do some overfit with given literals",
+  "comment": "work, overfit.",
   "varName": "rs",
+  "pre_context": "def something():\n\tl = input()\n\tc1 = input()\n\tif c1>len(l):\n\t\t<rs = $>",
   "env": [
     {
-      "n": "1",
-      "l": "['abc', 'def', 'ghi']",
-      "rs": "'def'"
+      "c1": "7",
+      "l": "['abc', 'def', 'ghi', 'jkl']",
+      "rs": "'jkl'"
     },
     {
-      "n": "1",
-      "l": "['abc', 'def', 'ghi', 'ufi']",
-      "rs": "'def'"
+      "c1": "6",
+      "l": "['abc', 'def', 'ghi', 'jkl']",
+      "rs": "'ghi'"
     },
     {
-      "n": "1",
-      "l": "['abc', 'ful', 'ghi', 'ufi']",
-      "rs": "'ful'"
+      "c1": "25",
+      "l": "['abc', 'def', 'ghi', 'jkl', 'mno']",
+      "rs": "'abc'"
     }
   ]
 }

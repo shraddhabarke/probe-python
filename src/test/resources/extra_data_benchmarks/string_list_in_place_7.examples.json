@@ -1,6 +1,7 @@
 {
   "comment": "hell overfits.",
   "varName": "rs",
+  "pre_context":"def StringCharMap():\n\ts = input()\n\tcharmap = input()\n\tr=\"\"\n\tfor c in s:\n\t\t<rs = $>",
   "env": [
     {
       "s": "'book'",

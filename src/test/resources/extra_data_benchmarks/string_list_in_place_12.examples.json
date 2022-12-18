@@ -1,0 +1,17 @@
+{
+  "comment": "hell overfits.",
+  "varName": "rs",
+  "pre_context":"def StringMidSplit():\n\ts = input()\n\thalf_len = len(s[::2])\n\t <rs = $>",
+  "wana_be": "s.split(s[len(s[::2])])",
+  "env": [
+    {
+      "s": "'abcdef'",
+      "rs": "['abc', 'ef']"
+    },
+    {
+      "s": "'12345678'",
+      "rs": "['1234', '678']"
+    }
+
+  ]
+}

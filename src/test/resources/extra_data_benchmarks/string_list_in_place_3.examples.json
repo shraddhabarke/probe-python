@@ -1,0 +1,22 @@
+{
+  "comment": "work, overfit.",
+  "varName": "rs",
+  "pre_context":"def cutStrings():\n\tl = input()\n\tc1 = input()\n\ts=\"\"\nfor var in l:\n\t\ts+=var[c1]\n\t<rs = $>",
+  "env": [
+    {
+      "c1": "0",
+      "l": "['abc', 'def', 'ghi']",
+      "rs": "'adg'"
+    },
+    {
+      "c1": "1",
+      "l": "['abc', 'def', 'ghi']",
+      "rs": "'beh'"
+    },
+    {
+      "c1": "2",
+      "l": "['abc', 'def', 'ghi']",
+      "rs": "'cfi'"
+    }
+  ]
+}

@@ -1,26 +1,19 @@
 {
-  "comment": "takes too long. overfit with n.",
+  "comment": "overfits.",
   "varName": "rs",
+  "pre_context":"def maxChar():\n\ts = input()\n\t<rs = $>",
   "env": [
     {
-      "n": "1",
-      "l": "['abc', 'def', 'ghi']",
-      "rs": "'def'"
+      "s": "'abcde'",
+      "rs": "'e'"
     },
     {
-      "n": "1",
-      "l": "['abc', 'def', 'ghi', 'ufi']",
-      "rs": "'def'"
+      "s": "'fghijkzop'",
+      "rs": "'z'"
     },
     {
-      "n": "1",
-      "l": "['abc', 'ful', 'ghi', 'ufi']",
-      "rs": "'ful'"
-    },
-    {
-      "n": "0",
-      "l": "['abc', 'ful']",
-      "rs": "'abc'"
+      "s": "'aabaa'",
+      "rs": "'b'"
     }
   ]
 }

@@ -1,0 +1,18 @@
+{
+  "comment": "overfit",
+  "varName": "rs",
+  "pre_context":" ",
+  "wana_be": " ",
+  "env": [
+    {
+      "s": "'cowboy'",
+      "count": "'aeiou'",
+      "rs": "2"
+    },
+    {
+      "s": "'basa sababa'",
+      "count": "'abcd'",
+      "rs": "8"
+    }
+  ]
+}
