@@ -1,0 +1,17 @@
+{
+  "comment": "overfits.",
+  "varName": "rs",
+  "pre_context":"def StringPlace():\n\tl = input()\n\ts = input()\n\t<rs = $>",
+  "env": [
+    {
+      "s": "'b'",
+      "l": "['a','b','c']",
+      "rs": "1"
+    },
+    {
+      "s": "'d'",
+      "l": "['a','b','c']",
+      "rs": "-1"
+    }
+  ]
+}

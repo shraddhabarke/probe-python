@@ -8,8 +8,8 @@ object Benchmarks extends App
       "-------------------------------------------\n" +
       "| Probe-Python Synthesizer |\n" +
       "-------------------------------------------\n")
-  println("Index Name                 Program")
-
+  println("Index Name                 time     Program")
+  trace.DebugPrints.setNone()
   val benchmarks = new File("src/test/resources/")
   assert(benchmarks.isDirectory)
 
@@ -17,7 +17,7 @@ object Benchmarks extends App
     dir => {
       println("----- -------------------- --------------------------------------")
       dir.listFiles()
-        .filter(_.getName.contains(".examples.json"))
+        .filter(_.getName.contains("14.examples.json"))
         .filter(!_.getName.contains(".out"))
         .sorted
         .zipWithIndex

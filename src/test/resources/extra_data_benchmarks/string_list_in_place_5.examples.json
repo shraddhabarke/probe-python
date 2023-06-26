@@ -1,0 +1,19 @@
+{
+  "comment": "overfits.",
+  "varName": "rs",
+  "pre_context":"def maxChar():\n\ts = input()\n\t<rs = $>",
+  "env": [
+    {
+      "s": "'abcde'",
+      "rs": "'e'"
+    },
+    {
+      "s": "'fghijkzop'",
+      "rs": "'z'"
+    },
+    {
+      "s": "'aabaa'",
+      "rs": "'b'"
+    }
+  ]
+}

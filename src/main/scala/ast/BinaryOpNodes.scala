@@ -62,6 +62,26 @@ case class StringAt(val lhs: StringNode, val rhs: IntNode) extends BinaryOpNode[
 
 }
 
+case class PyListStringAt(val lhs: ListNode[String], val rhs: PyIntNode) extends BinaryOpNode[String] with PyStringNode {
+  override protected val parenless: Boolean = true
+
+  override def doOp(l: Any, r: Any): Option[String] = (l, r) match {
+    case (l: Any, r: Any) =>
+      val l_str = l.asInstanceOf[List[String]]
+      val idx = r.asInstanceOf[Int]
+      if (idx >= l_str.length || idx < -l_str.length) None
+      else if (idx < 0) Some(l_str(l_str.length + idx))
+      else Some(l_str(idx))
+    case _ => wrongType(l, r)
+  }
+
+  override lazy val code: String = lhs.code + "[" + rhs.code + "]"
+  override def make(l: ASTNode, r: ASTNode): BinaryOpNode[String] =
+    new PyListStringAt(l.asInstanceOf[ListNode[String]], r.asInstanceOf[PyIntNode])
+  override def updateValues = copy(lhs.updateValues.asInstanceOf[ListNode[String]], rhs.updateValues.asInstanceOf[PyIntNode])
+
+}
+
 case class IntAddition(val lhs: IntNode, val rhs: IntNode) extends BinaryOpNode[Int] with IntNode {
   override protected val parenless: Boolean = true
 
@@ -553,10 +573,19 @@ case class PyStringSplit(val lhs: PyStringNode, val rhs: PyStringNode) extends B
 {
   override protected val parenless: Boolean = true
   override lazy val code: String = lhs.parensIfNeeded + ".split(" + rhs.code + ")"
-
+  private def split_python(s : String, sep: String): Array[String] = {
+    var rs = s.split(sep)
+    // scala split keep first empty, unless it is the only character
+    if (s.startsWith(sep) && s.length == 1)
+      rs = "" +: rs
+    // scala split remove last empty field
+    if (s.endsWith(sep))
+      rs = rs :+ ""
+    rs
+  }
   override def doOp(l: Any, r: Any): Option[Iterable[String]] = (l, r) match {
     case (_, "") => None
-    case (l: String, r: String) => Some(l.split(r).toList)
+    case (l: String, r: String) => Some(split_python(l, r).toList)
     case _ => wrongType(l, r)
   }
 

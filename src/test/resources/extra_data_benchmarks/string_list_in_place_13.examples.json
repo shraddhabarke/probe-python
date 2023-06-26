@@ -1,0 +1,19 @@
+{
+  "comment": "hell overfits.",
+  "varName": "rs",
+  "pre_context":"def StringMax:\n\ts = input()\n\tc = input()\n\t <rs = $>",
+  "wana_be": "max(s.split(c))",
+  "env": [
+    {
+      "c": "' '",
+      "s": "'34 32 35'",
+      "rs": "35"
+    },
+    {
+      "c": "','",
+      "s": "'923,3,54'",
+      "rs": "923"
+    }
+
+  ]
+}

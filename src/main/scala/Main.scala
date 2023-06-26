@@ -119,7 +119,7 @@ object Main extends App {
               rs = Some(
                 (task.asInstanceOf[sygus.PythonPBETask].outputVar + " = " + PostProcessor.clean(program).code,
                   timeout * 1000 - deadline.timeLeft.toMillis.toInt))
-              println(rs.get._1, rs.get._2, program.height, program.cost, bank.values.toList.length)
+              iprintln(s"(${rs.get._1}, ${rs.get._2}, ${program.height}, ${program.cost}, ${bank.values.toList.length})")
               break
             }
             else {
@@ -128,10 +128,7 @@ object Main extends App {
           }
         }
 
-        if (trace.DebugPrints.debug) {
-          val p = PostProcessor.clean(program)
-          println(s"[$i] (${program.height}) ${p.code}")
-        }
+        dprintln(s"[$i] (${program.height}) ${PostProcessor.clean(program).code}")
       }
     }
 

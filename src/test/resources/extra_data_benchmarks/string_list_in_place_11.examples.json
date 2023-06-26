@@ -1,0 +1,18 @@
+{
+  "comment": "hell overfits.",
+  "varName": "rs",
+  "pre_context":"def ListPop():\n\tn = input()\n\tl = input()\n\tlen = len(l)\n\t <rs = $>",
+  "env": [
+    {
+      "n": "2",
+      "l": "['abc', 'def', 'ghi']",
+      "rs": "['abc', 'def']"
+    },
+    {
+      "n": "1",
+      "l": "['dd', 'bb', 'cc']",
+      "rs": "['dd', 'cc']"
+    }
+
+  ]
+}

@@ -598,7 +598,20 @@ object PythonPBETask
 
           override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
             new PyIntDivision(children.head.asInstanceOf[PyIntNode], children(1).asInstanceOf[PyIntNode])
-        }
+        },
+
+        new BasicVocabMaker
+        {
+          override val arity: Int = 2
+          override val childTypes: List[Types] = List(Types.StringList, Types.PyInt)
+          override val returnType: Types = Types.PyString
+          override val nodeType: Class[_ <: ASTNode] = classOf[PyListStringAt]
+          override val head: String = ""
+
+          override def apply(children: List[ASTNode], contexts: List[Map[String, Any]]): ASTNode =
+            new PyListStringAt(children.head.asInstanceOf[ListNode[String]], children(1).asInstanceOf[PyIntNode])
+        },
+
       )
 
     VocabFactory(vocab.appendedAll(

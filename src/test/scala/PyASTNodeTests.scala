@@ -1070,7 +1070,38 @@ class PyASTNodeTests extends JUnitSuite {
   @Test def stringReplaceNode(): Unit = ()
 
   // List Operations
-  @Test def stringSplitNode(): Unit = ()
+  @Test def stringSplitNode(): Unit = {
+    // Test split is same as python's split
+    val sep = "-"
+
+    val s1 = "a-b-c-d"
+    val split1 = new PyStringSplit(PyStringLiteral(s1, 1), PyStringLiteral(sep, 1))
+    assertEquals(Some(List("a", "b", "c", "d")), split1.doOp(s1, sep))
+
+    val s2 = "a-b-c-d-"
+    val split2 = new PyStringSplit(PyStringLiteral(s2, 1), PyStringLiteral(sep, 1))
+    assertEquals(Some(List("a", "b", "c", "d", "")), split2.doOp(s2, sep))
+
+    val s3 = "-a-b-c-d"
+    val split3 = new PyStringSplit(PyStringLiteral(s3, 1), PyStringLiteral(sep, 1))
+    assertEquals(Some(List("", "a", "b", "c", "d")), split3.doOp(s3, sep))
+
+    val s4 = "-"
+    val split4 = new PyStringSplit(PyStringLiteral(s4, 1), PyStringLiteral(sep, 1))
+    assertEquals(Some(List("", "")), split4.doOp(s4, sep))
+
+    val s5 = "-a-b-c-d-"
+    val split5 = new PyStringSplit(PyStringLiteral(s5, 1), PyStringLiteral(sep, 1))
+    assertEquals(Some(List("", "a", "b", "c", "d", "")), split5.doOp(s5, sep))
+
+    val s6 = "-a"
+    val split6 = new PyStringSplit(PyStringLiteral(s6, 1), PyStringLiteral(sep, 1))
+    assertEquals(Some(List("", "a")), split6.doOp(s6, sep))
+
+    val s7 = "-a-"
+    val split7 = new PyStringSplit(PyStringLiteral(s7, 1), PyStringLiteral(sep, 1))
+    assertEquals(Some(List("", "a", "")), split7.doOp(s7, sep))
+  }
   @Test def stringJoinNode(): Unit = ()
   @Test def stringStepListNode(): Unit = {
     val x = new PyStringVariable("x", Map("x" -> "abcde") :: Map("x" -> "a") :: Map("x" -> "ab") :: Nil)
@@ -1142,4 +1173,5 @@ class PyASTNodeTests extends JUnitSuite {
     val divNumbers2 = new PyIntDivision(new PyIntLiteral(1,1),addNumbers)
     assertEquals("1 // (1 + 2 + 3 + 4)", divNumbers2.code)
   }
+  @Test def listStringAt(): Unit = ()
 }

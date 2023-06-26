@@ -1,0 +1,17 @@
+{
+  "comment": "Probe ignores 'n' value, and do some overfit with given literals",
+  "varName": "rs",
+  "pre_context":"def nCharInStringList():\n\tl = input()\n\tn = input()\n\ts=\"\"\nfor var in l:\n\t\t<rs = $>",
+  "env": [
+    {
+      "n": "1",
+      "l": "['abc', 'def', 'ghi']",
+      "rs": "'def'"
+    },
+    {
+      "n": "0",
+      "l": "['abc', 'def', 'ghi']",
+      "rs": "'abc'"
+    }
+  ]
+}
